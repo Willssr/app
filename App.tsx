@@ -15,8 +15,10 @@ import Chat from './components/Chat';
 import Notifications from './components/Notifications';
 import StoryViewer from './components/StoryViewer';
 import CreateStoryModal from './components/CreateStoryModal';
+import Login from './components/Login';
+import Download from './components/Download';
 
-type ActiveTab = 'feed' | 'ranking' | 'analytics' | 'friends' | 'notifications' | 'profile' | 'review';
+type ActiveTab = 'feed' | 'ranking' | 'analytics' | 'friends' | 'notifications' | 'profile' | 'review' | 'download';
 type View = 
   | { type: 'tab'; tab: ActiveTab }
   | { type: 'profile'; userId: string }
@@ -29,6 +31,7 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [stories, setStories] = useState<Story[]>(MOCK_STORIES);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
 
   const [view, setView] = useState<View>({ type: 'tab', tab: 'feed' });
@@ -299,6 +302,8 @@ export default function App() {
         />
       case 'notifications':
         return <Notifications notifications={notifications} />;
+       case 'download':
+        return <Download />;
       case 'profile':
         return <Profile user={currentUser} posts={posts} stories={stories} currentUser={currentUser} onEditProfile={() => setIsEditProfileModalOpen(true)} onBack={() => {}} friendRequests={[]} onSendFriendRequest={()=>{}} onBlockUser={()=>{}} onViewStories={handleViewStories} onCreateStory={() => setCreateStoryModalOpen(true)} />;
       case 'review':
@@ -308,6 +313,10 @@ export default function App() {
         return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} />;
     }
   };
+  
+  if (!isAuthenticated) {
+    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
+  }
 
   const activeTab = view.type === 'tab' ? view.tab : undefined;
 

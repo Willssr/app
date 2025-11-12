@@ -1,7 +1,7 @@
 import React from 'react';
-import { HomeIcon, TrophyIcon, ChartBarIcon, UserIcon, ClipboardCheckIcon, UsersIcon, BellIcon } from '../constants';
+import { HomeIcon, TrophyIcon, ChartBarIcon, UserIcon, ClipboardCheckIcon, UsersIcon, BellIcon, DownloadIcon } from '../constants';
 
-type ActiveTab = 'feed' | 'ranking' | 'analytics' | 'friends' | 'notifications' | 'profile' | 'review';
+type ActiveTab = 'feed' | 'ranking' | 'analytics' | 'friends' | 'notifications' | 'profile' | 'review' | 'download';
 
 interface BottomNavProps {
   activeTab?: ActiveTab;
@@ -60,11 +60,11 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, isAdmin,
           onClick={() => setActiveTab('notifications')}
           hasNotification={hasUnreadNotifications}
         />
-        <NavButton
-          label="Analytics"
-          icon={<ChartBarIcon />}
-          isActive={activeTab === 'analytics'}
-          onClick={() => setActiveTab('analytics')}
+         <NavButton
+          label="Install"
+          icon={<DownloadIcon className="h-6 w-6" />}
+          isActive={activeTab === 'download'}
+          onClick={() => setActiveTab('download')}
         />
          {isAdmin && (
             <NavButton
