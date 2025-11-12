@@ -1,0 +1,114 @@
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { User, Story } from '../types';
+import { XMarkIcon } from '../constants';
+
+const IMAGE_DURATION = 5000; // 5 seconds
+
+interface StoryViewerProps {
+  user: User;
+  allStories: Story[];
+  onClose: () => void;
+}
+
+const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) => {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  
+  const userStories = allStories
+    .filter(story => story.userId === user.id && story.timestamp > new Date(Date.now() - 24 * 60 * 60 * 1000))
+    .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+
+  const currentStory = userStories[currentIndex];
+
+  const goToNext = useCallback(() => {
+    setCurrentIndex(prev => {
+      if (prev >= userStories.length - 1) {
+        onClose();
+        return prev;
+      }
+      return prev + 1;
+    });
+  }, [userStories.length, onClose]);
+
+  const goToPrev = () => {
+    setCurrentIndex(prev => Math.max(0, prev - 1));
+  };
+
+  useEffect(() => {
+    if (!currentStory) return;
+
+    if (currentStory.type === 'image') {
+      const timer = setTimeout(goToNext, IMAGE_DURATION);
+      return () => clearTimeout(timer);
+    }
+  }, [currentIndex, currentStory, goToNext]);
+  
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowRight') goToNext();
+        if (e.key === 'ArrowLeft') goToPrev();
+        if (e.key === 'Escape') onClose();
+    }
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [goToNext, onClose])
+
+  if (!currentStory) {
+    onClose();
+    return null;
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center animate-fade-in">
+      <div className="relative w-full max-w-md h-full max-h-[95vh] bg-gray-900 rounded-lg overflow-hidden flex flex-col">
+        {/* Progress Bars */}
+        <div className="absolute top-2 left-2 right-2 flex space-x-1 z-20">
+          {userStories.map((_, index) => (
+            <div key={index} className="flex-1 h-1 bg-white/30 rounded-full">
+              <div 
+                className="h-full bg-white rounded-full"
+                style={{ width: index < currentIndex ? '100%' : index === currentIndex ? '100%' : '0%' }}
+              />
+            </div>
+          ))}
+        </div>
+        
+        {/* Header */}
+        <div className="absolute top-5 left-4 flex items-center space-x-2 z-20">
+            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+            <span className="text-white font-semibold text-sm">{user.name}</span>
+        </div>
+
+        {/* Close Button */}
+        <button onClick={onClose} className="absolute top-4 right-3 text-white z-20">
+          <XMarkIcon className="w-7 h-7" />
+        </button>
+
+        {/* Content */}
+        <div className="flex-grow flex items-center justify-center">
+            {currentStory.type === 'image' && (
+                <img src={currentStory.url} alt="Story" className="max-h-full max-w-full object-contain" />
+            )}
+            {currentStory.type === 'video' && (
+                <video 
+                    ref={videoRef}
+                    src={currentStory.url} 
+                    className="max-h-full max-w-full object-contain" 
+                    autoPlay 
+                    onEnded={goToNext}
+                    playsInline
+                />
+            )}
+        </div>
+        
+        {/* Navigation Overlays */}
+        <div className="absolute inset-0 flex">
+            <div className="w-1/3 h-full" onClick={goToPrev}></div>
+            <div className="w-2/3 h-full" onClick={goToNext}></div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StoryViewer;

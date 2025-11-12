@@ -1,0 +1,7 @@
+{
+  "name": "NinoVisk",
+  "description": "A social media app where users can post photos and videos, interact with content through likes and comments, and view leaderboards and engagement analytics.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
