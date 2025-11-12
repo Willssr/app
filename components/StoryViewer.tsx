@@ -12,7 +12,10 @@ interface StoryViewerProps {
 
 const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
+  // FIX: Initialize useRef with null to provide an initial value, satisfying TypeScript's requirement for useRef<T>(initialValue: T).
+  const animationFrameRef = useRef<number | null>(null);
   
   const userStories = allStories
     .filter(story => story.userId === user.id && story.timestamp > new Date(Date.now() - 24 * 60 * 60 * 1000))
@@ -33,16 +36,53 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
   const goToPrev = () => {
     setCurrentIndex(prev => Math.max(0, prev - 1));
   };
-
+  
   useEffect(() => {
     if (!currentStory) return;
 
-    if (currentStory.type === 'image') {
-      const timer = setTimeout(goToNext, IMAGE_DURATION);
-      return () => clearTimeout(timer);
+    setProgress(0);
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
     }
+
+    if (currentStory.type === 'image') {
+      let startTime: number | null = null;
+      const animate = (timestamp: number) => {
+        if (!startTime) startTime = timestamp;
+        const elapsed = timestamp - startTime;
+        const newProgress = Math.min((elapsed / IMAGE_DURATION) * 100, 100);
+        setProgress(newProgress);
+
+        if (elapsed < IMAGE_DURATION) {
+          animationFrameRef.current = requestAnimationFrame(animate);
+        } else {
+          goToNext();
+        }
+      };
+      animationFrameRef.current = requestAnimationFrame(animate);
+    } else if (currentStory.type === 'video' && videoRef.current) {
+        const video = videoRef.current;
+        const handleTimeUpdate = () => {
+            if (video.duration) {
+                setProgress((video.currentTime / video.duration) * 100);
+            }
+        };
+        video.addEventListener('timeupdate', handleTimeUpdate);
+        video.currentTime = 0;
+        video.play().catch(err => console.error("Video play failed:", err));
+        
+        return () => {
+            if (video) video.removeEventListener('timeupdate', handleTimeUpdate);
+        };
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
   }, [currentIndex, currentStory, goToNext]);
-  
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === 'ArrowRight') goToNext();
@@ -51,7 +91,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
     }
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [goToNext, onClose])
+  }, [goToNext, goToPrev, onClose]);
 
   if (!currentStory) {
     onClose();
@@ -67,7 +107,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
             <div key={index} className="flex-1 h-1 bg-white/30 rounded-full">
               <div 
                 className="h-full bg-white rounded-full"
-                style={{ width: index < currentIndex ? '100%' : index === currentIndex ? '100%' : '0%' }}
+                style={{ width: index < currentIndex ? '100%' : index === currentIndex ? `${progress}%` : '0%' }}
               />
             </div>
           ))}
@@ -94,9 +134,9 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
                     ref={videoRef}
                     src={currentStory.url} 
                     className="max-h-full max-w-full object-contain" 
-                    autoPlay 
                     onEnded={goToNext}
                     playsInline
+                    muted // autoplay often requires video to be muted
                 />
             )}
         </div>
