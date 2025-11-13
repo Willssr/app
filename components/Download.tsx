@@ -1,5 +1,15 @@
-import React from 'react';
-import { ShareIOSIcon, MenuAndroidIcon } from '../constants';
+import React, { useState, useEffect } from 'react';
+import { ShareIOSIcon, MenuAndroidIcon, DownloadIcon } from '../constants';
+
+// Define the event type for BeforeInstallPromptEvent
+interface BeforeInstallPromptEvent extends Event {
+  readonly platforms: string[];
+  readonly userChoice: Promise<{
+    outcome: 'accepted' | 'dismissed';
+    platform: string;
+  }>;
+  prompt(): Promise<void>;
+}
 
 const InstructionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
     <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
@@ -16,6 +26,41 @@ const InstructionStep: React.FC<{ icon: React.ReactNode; text: string; }> = ({ i
 );
 
 const Download: React.FC = () => {
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+    const [isAppInstalled, setIsAppInstalled] = useState(false);
+
+    useEffect(() => {
+        const handleBeforeInstallPrompt = (e: Event) => {
+            e.preventDefault();
+            setDeferredPrompt(e as BeforeInstallPromptEvent);
+        };
+        
+        // Check if the app is already installed
+        if (window.matchMedia('(display-mode: standalone)').matches) {
+            setIsAppInstalled(true);
+        }
+
+        window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!deferredPrompt) return;
+        
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        if (outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+            setIsAppInstalled(true);
+        } else {
+            console.log('User dismissed the install prompt');
+        }
+        setDeferredPrompt(null);
+    };
+
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center">
@@ -23,6 +68,22 @@ const Download: React.FC = () => {
                 <p className="mt-2 text-gray-400">
                     Add NinoVisk to your home screen for a faster, app-like experience.
                 </p>
+            </div>
+            
+            <div className="bg-gray-800 p-6 rounded-lg shadow-xl text-center">
+                {isAppInstalled ? (
+                     <p className="text-green-400 font-semibold">NinoVisk is already installed on your device!</p>
+                ) : deferredPrompt ? (
+                    <button 
+                        onClick={handleInstallClick}
+                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-full hover:scale-105 transition-transform duration-200 flex items-center justify-center w-full"
+                    >
+                        <DownloadIcon className="w-6 h-6 mr-2" />
+                        Install NinoVisk App
+                    </button>
+                ) : (
+                    <p className="text-gray-400">Installation is not currently available on your browser, but you can follow the manual steps below.</p>
+                )}
             </div>
 
             <InstructionCard title="For iOS / Safari">

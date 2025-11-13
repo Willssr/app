@@ -1,6 +1,9 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { auth, getOrCreateUserProfile, isFirebaseConfigured } from './services/firebase';
 import { User, Post, Comment, FriendRequest, Message, Notification, Story } from './types';
-import { MOCK_POSTS, MOCK_USERS, MOCK_FRIEND_REQUESTS, MOCK_MESSAGES, MOCK_NOTIFICATIONS, MOCK_STORIES } from './constants';
+import { MOCK_USERS, MOCK_POSTS, MOCK_FRIEND_REQUESTS, MOCK_MESSAGES, MOCK_NOTIFICATIONS, MOCK_STORIES } from './constants';
+
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
 import Feed from './components/Feed';
@@ -25,15 +28,16 @@ type View =
   | { type: 'chat'; userId: string };
 
 export default function App() {
+  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+
   const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
   const [users, setUsers] = useState<User[]>(MOCK_USERS);
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>(MOCK_FRIEND_REQUESTS);
   const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [stories, setStories] = useState<Story[]>(MOCK_STORIES);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-
+  
   const [view, setView] = useState<View>({ type: 'tab', tab: 'feed' });
   
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -41,12 +45,52 @@ export default function App() {
   const [isCreateStoryModalOpen, setCreateStoryModalOpen] = useState(false);
   const [viewingStoriesForUser, setViewingStoriesForUser] = useState<User | null>(null);
 
-  
-  const currentUser = useMemo(() => users.find(u => u.id === 'u1')!, [users]);
-  const isAdmin = currentUser.id === 'u1';
+  useEffect(() => {
+    if (!isFirebaseConfigured) {
+        setAuthLoading(false);
+        return;
+    }
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+            const userProfile = await getOrCreateUserProfile(firebaseUser);
+            setCurrentUser(userProfile);
+            setUsers(prevUsers => {
+                const userExists = prevUsers.some(u => u.id === userProfile.id);
+                if (userExists) {
+                    return prevUsers.map(u => u.id === userProfile.id ? userProfile : u);
+                }
+                return [userProfile, ...prevUsers];
+            });
+        } else {
+            setCurrentUser(null);
+        }
+        setAuthLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const isAdmin = currentUser?.id === 'u1'; 
   const hasUnreadNotifications = useMemo(() => notifications.some(n => !n.read), [notifications]);
+  
+  const handleSignOut = async () => {
+    if (!isFirebaseConfigured) {
+        setCurrentUser(null);
+        return;
+    }
+    try {
+      await signOut(auth);
+    } catch (error) {
+        console.error("Sign out error", error);
+    }
+  };
+
+  const handleMockLogin = (user: User) => {
+    setCurrentUser(user);
+  };
 
   const handleLikeToggle = useCallback((postId: string) => {
+    if (!currentUser) return;
     setPosts(prevPosts =>
       prevPosts.map(post => {
         if (post.id === postId) {
@@ -55,6 +99,13 @@ export default function App() {
             ? post.likes.filter(id => id !== currentUser.id)
             : [...post.likes, currentUser.id];
           
+          // Update points
+          setUsers(prevUsers => prevUsers.map(u => {
+            if (u.id === post.user.id) return { ...u, points: u.points + (isLiked ? -1 : 1) };
+            return u;
+          }));
+
+          // Add notification
           if (!isLiked && post.user.id !== currentUser.id) {
             const newNotification: Notification = {
               id: `n${Date.now()}`,
@@ -66,13 +117,6 @@ export default function App() {
             };
             setNotifications(prev => [newNotification, ...prev]);
           }
-          
-          setUsers(prevUsers => prevUsers.map(user => {
-            if (user.id === post.user.id) {
-              return { ...user, points: user.points + (isLiked ? -1 : 1) };
-            }
-            return user;
-          }));
 
           return { ...post, likes: newLikes };
         }
@@ -82,7 +126,7 @@ export default function App() {
   }, [currentUser]);
 
   const handleAddComment = useCallback((postId: string, text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !currentUser) return;
 
     const newComment: Comment = {
       id: `c${Date.now()}`,
@@ -91,13 +135,14 @@ export default function App() {
       timestamp: new Date(),
     };
 
-    setPosts(prevPosts => 
+    setPosts(prevPosts =>
       prevPosts.map(post => {
         if (post.id === postId) {
-          setUsers(prevUsers => prevUsers.map(user => {
-            if (user.id === post.user.id) return { ...user, points: user.points + 2 };
-            if (user.id === currentUser.id) return { ...user, points: user.points + 1 };
-            return user;
+           // Update points
+          setUsers(prevUsers => prevUsers.map(u => {
+            if (u.id === post.user.id) return { ...u, points: u.points + 2 };
+            if (u.id === currentUser.id) return { ...u, points: u.points + 1 };
+            return u;
           }));
           return { ...post, comments: [...post.comments, newComment] };
         }
@@ -107,6 +152,7 @@ export default function App() {
   }, [currentUser]);
 
   const handleCreatePost = useCallback((caption: string, file: File) => {
+      if (!currentUser) return;
       const newPost: Post = {
         id: `p${Date.now()}`,
         type: file.type.startsWith('video/') ? 'video' : 'image',
@@ -116,13 +162,14 @@ export default function App() {
         likes: [],
         comments: [],
         timestamp: new Date(),
-        status: currentUser.id === 'u1' ? 'approved' : 'pending',
+        status: isAdmin ? 'approved' : 'pending',
       };
-      setPosts(prevPosts => [newPost, ...prevPosts]);
+      setPosts(prev => [newPost, ...prev]);
       setIsCreateModalOpen(false);
-  }, [currentUser]);
+  }, [currentUser, isAdmin]);
 
   const handleCreateStory = useCallback((file: File) => {
+    if (!currentUser) return;
     const newStory: Story = {
       id: `s${Date.now()}`,
       userId: currentUser.id,
@@ -135,68 +182,58 @@ export default function App() {
   }, [currentUser]);
 
   const handleUpdateProfile = useCallback((updatedData: { name: string; bio: string; musicUrl: string; avatarFile?: File; coverFile?: File }) => {
-    setUsers(prevUsers => prevUsers.map(user => {
+    if (!currentUser) return;
+    setUsers(prevUsers =>
+      prevUsers.map(user => {
         if (user.id === currentUser.id) {
-            return {
-                ...user,
-                name: updatedData.name,
-                bio: updatedData.bio,
-                profileMusicUrl: updatedData.musicUrl,
-                avatar: updatedData.avatarFile ? URL.createObjectURL(updatedData.avatarFile) : user.avatar,
-                coverPhoto: updatedData.coverFile ? URL.createObjectURL(updatedData.coverFile) : user.coverPhoto,
-            };
+          return {
+            ...user,
+            name: updatedData.name,
+            bio: updatedData.bio,
+            profileMusicUrl: updatedData.musicUrl,
+            avatar: updatedData.avatarFile ? URL.createObjectURL(updatedData.avatarFile) : user.avatar,
+            coverPhoto: updatedData.coverFile ? URL.createObjectURL(updatedData.coverFile) : user.coverPhoto,
+          };
         }
         return user;
-    }));
+      })
+    );
     setIsEditProfileModalOpen(false);
-  }, [currentUser.id]);
+  }, [currentUser]);
 
   const handleApprovePost = useCallback((postId: string) => {
-      setPosts(prevPosts => prevPosts.map(post => 
-        post.id === postId ? { ...post, status: 'approved' } : post
-      ));
+      setPosts(prev => prev.map(p => p.id === postId ? {...p, status: 'approved'} : p));
   }, []);
 
   const handleRejectPost = useCallback((postId: string) => {
-      setPosts(prevPosts => prevPosts.filter(post => post.id !== postId));
+      setPosts(prev => prev.filter(p => p.id !== postId));
   }, []);
 
   const handleSendFriendRequest = useCallback((toId: string) => {
-    const existingRequest = friendRequests.find(r => r.from.id === currentUser.id && r.to.id === toId);
-    if (existingRequest) return;
-
+    if (!currentUser || currentUser.id === toId) return;
     const toUser = users.find(u => u.id === toId);
     if (!toUser) return;
-
-    const newRequest: FriendRequest = {
-        id: `fr${Date.now()}`,
-        from: currentUser,
-        to: toUser,
-        status: 'pending',
-    };
-    setFriendRequests(prev => [...prev, newRequest]);
     
-    const newNotification: Notification = {
-      id: `n${Date.now()}`,
-      type: 'friend_request',
-      user: currentUser,
-      timestamp: new Date(),
-      read: false,
+    const newRequest: FriendRequest = {
+      id: `fr${Date.now()}`,
+      from: currentUser,
+      to: toUser,
+      status: 'pending',
     };
-    setNotifications(prev => [newNotification, ...prev]);
 
-  }, [currentUser, friendRequests, users]);
+    setFriendRequests(prev => [...prev, newRequest]);
+  }, [currentUser, users]);
   
   const handleAcceptFriendRequest = useCallback((requestId: string) => {
     const request = friendRequests.find(r => r.id === requestId);
     if (!request) return;
 
     setUsers(prev => prev.map(u => {
-      if (u.id === request.from.id) return { ...u, friends: [...u.friends, request.to.id] };
-      if (u.id === request.to.id) return { ...u, friends: [...u.friends, request.from.id] };
-      return u;
+        if (u.id === request.from.id) return { ...u, friends: [...u.friends, request.to.id] };
+        if (u.id === request.to.id) return { ...u, friends: [...u.friends, request.from.id] };
+        return u;
     }));
-
+    
     setFriendRequests(prev => prev.filter(r => r.id !== requestId));
   }, [friendRequests]);
 
@@ -205,21 +242,27 @@ export default function App() {
   }, []);
 
   const handleBlockUser = useCallback((userId: string) => {
+    if (!currentUser) return;
     setUsers(prev => prev.map(u => {
-      if (u.id === currentUser.id) {
-        const newFriends = u.friends.filter(friendId => friendId !== userId);
-        return { ...u, blockedUsers: [...u.blockedUsers, userId], friends: newFriends };
-      }
-      if (u.id === userId) {
-         const newFriends = u.friends.filter(friendId => friendId !== currentUser.id);
-         return { ...u, friends: newFriends };
-      }
-      return u;
+        if (u.id === currentUser.id) {
+            return {
+                ...u,
+                blockedUsers: [...u.blockedUsers, userId],
+                friends: u.friends.filter(id => id !== userId)
+            };
+        }
+        if (u.id === userId) {
+            return {
+                ...u,
+                friends: u.friends.filter(id => id !== currentUser.id)
+            };
+        }
+        return u;
     }));
-  }, [currentUser.id]);
+  }, [currentUser]);
 
   const handleSendMessage = useCallback((toId: string, text: string) => {
-    if (!text.trim()) return;
+    if (!text.trim() || !currentUser) return;
     const newMessage: Message = {
       id: `m${Date.now()}`,
       fromId: currentUser.id,
@@ -228,17 +271,22 @@ export default function App() {
       timestamp: new Date(),
     };
     setMessages(prev => [...prev, newMessage]);
-  }, [currentUser.id]);
+  }, [currentUser]);
   
   const handleMarkNotificationsAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications(prev => prev.map(n => ({...n, read: true})));
   }, []);
 
   const handleSetActiveTab = (tab: ActiveTab) => {
+    if (!currentUser) return;
     if (tab === 'notifications') {
       handleMarkNotificationsAsRead();
     }
-    setView({ type: 'tab', tab });
+     if (tab === 'profile') {
+      setView({ type: 'profile', userId: currentUser.id });
+    } else {
+      setView({ type: 'tab', tab });
+    }
   };
   
   const handleViewStories = useCallback((userId: string) => {
@@ -248,6 +296,22 @@ export default function App() {
     }
   }, [users]);
 
+  if (authLoading) {
+    return (
+      <div className="bg-gray-900 min-h-screen flex items-center justify-center text-white">
+          <div className="text-center">
+              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+                  NinoVisk
+              </h1>
+              <p className="mt-2 text-gray-400">Loading...</p>
+          </div>
+      </div>
+    );
+  }
+  
+  if (!currentUser) {
+    return <Login onMockLogin={handleMockLogin} />;
+  }
 
   const renderContent = () => {
     if (view.type === 'profile') {
@@ -282,8 +346,7 @@ export default function App() {
             onSendMessage={handleSendMessage}
         />
     }
-
-    // Default to tab view
+    
     switch (view.tab) {
       case 'feed':
         return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} />;
@@ -304,8 +367,8 @@ export default function App() {
         return <Notifications notifications={notifications} />;
        case 'download':
         return <Download />;
-      case 'profile':
-        return <Profile user={currentUser} posts={posts} stories={stories} currentUser={currentUser} onEditProfile={() => setIsEditProfileModalOpen(true)} onBack={() => {}} friendRequests={[]} onSendFriendRequest={()=>{}} onBlockUser={()=>{}} onViewStories={handleViewStories} onCreateStory={() => setCreateStoryModalOpen(true)} />;
+      case 'profile': // This case is handled by handleSetActiveTab
+         return null;
       case 'review':
         if (!isAdmin) return null;
         return <Review pendingPosts={posts.filter(p => p.status === 'pending')} onApprove={handleApprovePost} onReject={handleRejectPost} />;
@@ -313,23 +376,19 @@ export default function App() {
         return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} />;
     }
   };
-  
-  if (!isAuthenticated) {
-    return <Login onLoginSuccess={() => setIsAuthenticated(true)} />;
-  }
 
-  const activeTab = view.type === 'tab' ? view.tab : undefined;
+  const activeTab = view.type === 'tab' ? view.tab : (view.type === 'profile' && view.userId === currentUser.id ? 'profile' : undefined);
 
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans flex flex-col">
-      <Header />
+      <Header user={currentUser} onSignOut={handleSignOut} />
       <main className="flex-grow container mx-auto px-4 py-4 mb-16">
         {renderContent()}
       </main>
       <BottomNav 
         activeTab={activeTab} 
         setActiveTab={handleSetActiveTab} 
-        isAdmin={isAdmin}
+        isAdmin={!!isAdmin}
         hasUnreadNotifications={hasUnreadNotifications}
       />
       {isCreateModalOpen && <CreatePostModal onClose={() => setIsCreateModalOpen(false)} onCreate={handleCreatePost} />}

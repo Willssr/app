@@ -1,21 +1,11 @@
+
 import { GoogleGenAI } from "@google/genai";
 import { LocationData } from "../types";
 
-const API_KEY = process.env.API_KEY;
-
-let ai: GoogleGenAI | null = null;
-
-if (API_KEY) {
-  ai = new GoogleGenAI({ apiKey: API_KEY });
-} else {
-  console.warn("Gemini API key not found. Please set the API_KEY environment variable. AI features will be disabled.");
-}
+// FIX: Per coding guidelines, initialize GoogleGenAI directly assuming API_KEY is present.
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeLocationData = async (locations: LocationData[]): Promise<string> => {
-  if (!ai) {
-    return "API Key not configured. Cannot analyze data.";
-  }
-  
   const locationSummary = locations
     .map(loc => `${loc.city}, ${loc.country}: ${loc.count} users`)
     .join('\n');
