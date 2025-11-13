@@ -20,7 +20,7 @@ const NavButton: React.FC<{
   <button
     onClick={onClick}
     className={`relative flex flex-col items-center justify-center w-full pt-2 pb-1 transition-colors duration-200 ${
-      isActive ? 'text-purple-400' : 'text-gray-400 hover:text-white'
+      isActive ? 'text-accent' : 'text-text-secondary hover:text-text-primary'
     }`}
   >
     {icon}
@@ -33,7 +33,7 @@ const NavButton: React.FC<{
 
 const BottomNav: React.FC<BottomNavProps> = ({ activeTab, setActiveTab, isAdmin, hasUnreadNotifications }) => {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-gray-800/80 backdrop-blur-sm border-t border-gray-700 shadow-lg z-10">
+    <nav className="fixed bottom-0 left-0 right-0 bg-background-secondary/80 backdrop-blur-sm border-t border-border-color shadow-lg z-30">
       <div className="container mx-auto flex justify-around">
         <NavButton
           label="Feed"

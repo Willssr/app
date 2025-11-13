@@ -26,16 +26,16 @@ const Review: React.FC<ReviewProps> = ({ pendingPosts, onApprove, onReject }) =>
 
     return (
         <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">Posts for Review</h2>
+            <h2 className="text-3xl font-bold text-center mb-6 text-accent">Posts for Review</h2>
             <div className="space-y-4">
                 {pendingPosts.length > 0 ? (
                     pendingPosts.map(post => (
-                        <div key={post.id} className="bg-gray-800 rounded-lg shadow-xl overflow-hidden">
+                        <div key={post.id} className="bg-background-secondary rounded-xl shadow-xl overflow-hidden border border-border-color">
                             <div className="p-4 flex items-center space-x-3">
                                 <img src={post.user.avatar} alt={post.user.name} className="w-10 h-10 rounded-full" />
                                 <div>
-                                    <p className="font-semibold text-white">{post.user.name}</p>
-                                    <p className="text-xs text-gray-400">{timeSince(post.timestamp)} ago</p>
+                                    <p className="font-semibold text-text-primary">{post.user.name}</p>
+                                    <p className="text-xs text-text-secondary">{timeSince(post.timestamp)} ago</p>
                                 </div>
                             </div>
 
@@ -46,10 +46,10 @@ const Review: React.FC<ReviewProps> = ({ pendingPosts, onApprove, onReject }) =>
                             )}
 
                             <div className="p-4">
-                               <p className="text-gray-200">{post.caption}</p>
+                               <p className="text-text-primary">{post.caption}</p>
                             </div>
 
-                            <div className="p-4 bg-gray-900/50 flex justify-end space-x-3">
+                            <div className="p-4 bg-background-primary/50 flex justify-end space-x-3">
                                 <button onClick={() => onReject(post.id)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                                     Reject
                                 </button>
@@ -60,7 +60,7 @@ const Review: React.FC<ReviewProps> = ({ pendingPosts, onApprove, onReject }) =>
                         </div>
                     ))
                 ) : (
-                    <p className="text-center text-gray-500 mt-8">No posts are currently pending review.</p>
+                    <p className="text-center text-text-secondary mt-8">No posts are currently pending review.</p>
                 )}
             </div>
         </div>

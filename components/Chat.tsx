@@ -28,10 +28,10 @@ const Chat: React.FC<ChatProps> = ({ partner, messages, currentUser, onBack, onS
     const sortedMessages = messages.slice().sort((a,b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     return (
-        <div className="flex flex-col h-full max-w-2xl mx-auto" style={{height: 'calc(100vh - 120px)'}}>
+        <div className="flex flex-col h-full max-w-2xl mx-auto bg-background-secondary rounded-xl border border-border-color" style={{height: 'calc(100vh - 120px)'}}>
             {/* Header */}
-            <div className="flex items-center p-3 border-b border-gray-700 bg-gray-800 rounded-t-lg">
-                <button onClick={onBack} className="text-purple-400 hover:text-purple-300 mr-3">
+            <div className="flex items-center p-3 border-b border-border-color flex-shrink-0">
+                <button onClick={onBack} className="text-accent hover:text-accent-hover mr-3">
                     &larr;
                 </button>
                 <img src={partner.avatar} alt={partner.name} className="w-10 h-10 rounded-full" />
@@ -39,12 +39,12 @@ const Chat: React.FC<ChatProps> = ({ partner, messages, currentUser, onBack, onS
             </div>
 
             {/* Messages */}
-            <div className="flex-grow p-4 space-y-4 overflow-y-auto bg-gray-800/50">
+            <div className="flex-grow p-4 space-y-4 overflow-y-auto bg-background-primary/50">
                 {sortedMessages.map(msg => (
                     <div key={msg.id} className={`flex items-end gap-2 ${msg.fromId === currentUser.id ? 'justify-end' : 'justify-start'}`}>
-                       {msg.fromId !== currentUser.id && <img src={partner.avatar} className="w-6 h-6 rounded-full" />}
-                       <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${msg.fromId === currentUser.id ? 'bg-purple-600 text-white rounded-br-lg' : 'bg-gray-700 text-gray-200 rounded-bl-lg'}`}>
-                            <p>{msg.text}</p>
+                       {msg.fromId !== currentUser.id && <img src={partner.avatar} className="w-6 h-6 rounded-full self-start" />}
+                       <div className={`max-w-xs md:max-w-md p-3 rounded-2xl ${msg.fromId === currentUser.id ? 'bg-accent text-white rounded-br-lg' : 'bg-background-tertiary text-text-primary rounded-bl-lg'}`}>
+                            <p className="break-words">{msg.text}</p>
                        </div>
                     </div>
                 ))}
@@ -52,16 +52,16 @@ const Chat: React.FC<ChatProps> = ({ partner, messages, currentUser, onBack, onS
             </div>
 
             {/* Input */}
-            <form onSubmit={handleSend} className="p-3 border-t border-gray-700 bg-gray-800 rounded-b-lg">
+            <form onSubmit={handleSend} className="p-3 border-t border-border-color flex-shrink-0">
                 <div className="flex items-center space-x-2">
                     <input
                         type="text"
                         value={text}
                         onChange={(e) => setText(e.target.value)}
                         placeholder="Type a message..."
-                        className="w-full bg-gray-700 border-gray-600 rounded-full px-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                        className="w-full bg-background-tertiary border-border-color rounded-full px-4 py-2 text-sm text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                     />
-                    <button type="submit" className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full disabled:opacity-50" disabled={!text.trim()}>
+                    <button type="submit" className="bg-accent hover:bg-accent-hover text-white font-bold py-2 px-4 rounded-full disabled:opacity-50" disabled={!text.trim()}>
                         Send
                     </button>
                 </div>

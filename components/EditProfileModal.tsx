@@ -28,12 +28,12 @@ const ImageInput: React.FC<{ label: string; currentImageUrl?: string; onFileChan
     
     return (
         <div>
-            <label className="block text-sm font-medium text-gray-300 mb-1">{label}</label>
+            <label className="block text-sm font-medium text-text-secondary mb-1">{label}</label>
             <div className="flex items-center space-x-4">
-                <div className="w-16 h-16 rounded-full bg-gray-700 overflow-hidden flex-shrink-0">
+                <div className="w-16 h-16 rounded-full bg-background-tertiary overflow-hidden flex-shrink-0">
                     {preview && <img src={preview} alt="Preview" className="w-full h-full object-cover" />}
                 </div>
-                <button type="button" onClick={() => inputRef.current?.click()} className="text-sm bg-gray-600 hover:bg-gray-500 text-white font-semibold py-1 px-3 rounded-md transition-colors">
+                <button type="button" onClick={() => inputRef.current?.click()} className="text-sm bg-background-tertiary hover:bg-border-color text-text-primary font-semibold py-1 px-3 rounded-md transition-colors">
                     Change
                 </button>
             </div>
@@ -73,18 +73,18 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ currentUser, onClos
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <div className="bg-gray-800 rounded-lg shadow-xl w-full max-w-lg relative animate-fade-in-up">
-                <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-white z-10">
+            <div className="bg-background-secondary rounded-xl shadow-xl w-full max-w-lg relative animate-fade-in-up border border-border-color">
+                <button onClick={onClose} className="absolute top-3 right-3 text-text-secondary hover:text-text-primary z-10">
                     <XMarkIcon className="w-6 h-6" />
                 </button>
-                <h2 className="text-xl font-bold text-center p-4 border-b border-gray-700 text-white">Edit Profile</h2>
+                <h2 className="text-xl font-bold text-center p-4 border-b border-border-color text-text-primary">Edit Profile</h2>
 
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
                         <div>
-                            <label className="block text-sm font-medium text-gray-300 mb-1">Cover Photo</label>
+                            <label className="block text-sm font-medium text-text-secondary mb-1">Cover Photo</label>
                             <div 
-                                className="h-32 rounded-md bg-gray-700 bg-cover bg-center relative cursor-pointer group"
+                                className="h-32 rounded-md bg-background-tertiary bg-cover bg-center relative cursor-pointer group"
                                 style={{backgroundImage: `url(${coverPreview})`}}
                                 onClick={() => coverInputRef.current?.click()}
                             >
@@ -98,45 +98,45 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ currentUser, onClos
                         <ImageInput label="Profile Picture" currentImageUrl={currentUser.avatar} onFileChange={setAvatarFile} />
                         
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-gray-300">Name</label>
+                            <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Name</label>
                             <input
                                 id="name"
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full mt-1 bg-gray-700 border-gray-600 rounded-md p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                className="w-full mt-1 bg-background-tertiary border-border-color rounded-md p-2 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
                         
                         <div>
-                            <label htmlFor="bio" className="block text-sm font-medium text-gray-300">Bio</label>
+                            <label htmlFor="bio" className="block text-sm font-medium text-text-secondary">Bio</label>
                             <textarea
                                 id="bio"
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
                                 rows={3}
-                                className="w-full mt-1 bg-gray-700 border-gray-600 rounded-md p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                className="w-full mt-1 bg-background-tertiary border-border-color rounded-md p-2 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="music" className="block text-sm font-medium text-gray-300">Profile Music URL</label>
+                            <label htmlFor="music" className="block text-sm font-medium text-text-secondary">Profile Music URL</label>
                             <input
                                 id="music"
                                 type="text"
                                 value={musicUrl}
                                 onChange={(e) => setMusicUrl(e.target.value)}
                                 placeholder="e.g., https://example.com/song.mp3"
-                                className="w-full mt-1 bg-gray-700 border-gray-600 rounded-md p-2 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                                className="w-full mt-1 bg-background-tertiary border-border-color rounded-md p-2 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
                     </div>
 
-                    <div className="p-4 bg-gray-900/50 rounded-b-lg flex justify-end space-x-3">
-                        <button type="button" onClick={onClose} className="bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-lg transition-opacity">
+                    <div className="p-4 bg-background-primary/50 rounded-b-xl flex justify-end space-x-3">
+                        <button type="button" onClick={onClose} className="bg-background-tertiary hover:bg-border-color text-text-primary font-bold py-2 px-4 rounded-lg transition-opacity">
                             Cancel
                         </button>
-                        <button type="submit" className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-2 px-4 rounded-lg hover:opacity-90 transition-opacity">
+                        <button type="submit" className="bg-accent hover:bg-accent-hover text-white font-bold py-2 px-4 rounded-lg transition-opacity">
                             Save Changes
                         </button>
                     </div>

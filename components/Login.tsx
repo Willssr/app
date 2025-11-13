@@ -24,7 +24,7 @@ const InputField: React.FC<{ id: string; type: string; placeholder: string; valu
             type={type}
             autoComplete={id === 'password' ? 'current-password' : 'email'}
             required
-            className="w-full bg-gray-700 border-gray-600 rounded-md p-3 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full bg-background-tertiary border-border-color rounded-md p-3 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
             placeholder={placeholder}
             value={value}
             onChange={onChange}
@@ -187,15 +187,15 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
 
     if (!isFirebaseConfigured) {
         return (
-            <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4">
-                <div className="text-center w-full max-w-md bg-gray-800 p-8 rounded-lg shadow-xl">
-                    <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600 mb-2">
+            <div className="bg-background-primary text-text-primary min-h-screen flex flex-col items-center justify-center p-4">
+                <div className="text-center w-full max-w-md bg-background-secondary p-8 rounded-lg shadow-xl border border-border-color">
+                    <h1 className="text-4xl font-bold text-accent mb-2">
                         NinoVisk
                     </h1>
-                    <p className="text-gray-400 mb-6">Firebase is not configured. Please select a mock user to continue.</p>
+                    <p className="text-text-secondary mb-6">Firebase is not configured. Please select a mock user to continue.</p>
                     <div className="space-y-3">
                         {MOCK_USERS.map(user => (
-                            <button key={user.id} onClick={() => onMockLogin(user)} className="w-full bg-gray-700 hover:bg-gray-600 text-white font-semibold py-3 px-4 rounded-lg flex items-center transition-colors duration-200">
+                            <button key={user.id} onClick={() => onMockLogin(user)} className="w-full bg-background-tertiary hover:bg-border-color text-text-primary font-semibold py-3 px-4 rounded-lg flex items-center transition-colors duration-200">
                                 <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full mr-4" />
                                 <span>Log in as {user.name}</span>
                             </button>
@@ -208,15 +208,15 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
     
     if (isConfigError) {
         return (
-            <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-sans">
-                <div className="w-full max-w-lg text-center bg-gray-800 p-8 rounded-lg shadow-xl border-2 border-red-500">
+            <div className="bg-background-primary text-text-primary min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+                <div className="w-full max-w-lg text-center bg-background-secondary p-8 rounded-lg shadow-xl border-2 border-red-500">
                     <WarningIcon className="h-16 w-16 mx-auto text-red-500 mb-4" />
                     <h2 className="text-2xl font-bold text-red-400 mb-3">Action Required: Project Configuration</h2>
                     <p className="text-gray-300 mb-6">
                         The app cannot connect to the login service because a required feature ("Email/Password" sign-in) is disabled in your Firebase project.
                     </p>
-                    <div className="text-left bg-gray-900 p-4 rounded-md">
-                        <p className="font-semibold text-white">To fix this, you MUST follow these steps:</p>
+                    <div className="text-left bg-background-primary p-4 rounded-md">
+                        <p className="font-semibold text-text-primary">To fix this, you MUST follow these steps:</p>
                         <ol className="list-decimal list-inside ml-2 mt-2 space-y-2 text-gray-300">
                             <li>
                                 Click the button below to open your Firebase project settings.
@@ -237,8 +237,8 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
                             </li>
                         </ol>
                     </div>
-                    <p className="mt-6 text-sm text-gray-400">
-                        After completing these steps, please <button onClick={() => window.location.reload()} className="text-purple-400 underline hover:text-purple-300">refresh this page</button>.
+                    <p className="mt-6 text-sm text-text-secondary">
+                        After completing these steps, please <button onClick={() => window.location.reload()} className="text-accent underline hover:text-accent-hover">refresh this page</button>.
                     </p>
                 </div>
             </div>
@@ -247,15 +247,15 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
 
     if (isDomainError) {
         return (
-            <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-sans">
-                <div className="w-full max-w-lg text-center bg-gray-800 p-8 rounded-lg shadow-xl border-2 border-red-500">
+            <div className="bg-background-primary text-text-primary min-h-screen flex flex-col items-center justify-center p-4 font-sans">
+                <div className="w-full max-w-lg text-center bg-background-secondary p-8 rounded-lg shadow-xl border-2 border-red-500">
                     <WarningIcon className="h-16 w-16 mx-auto text-red-500 mb-4" />
                     <h2 className="text-2xl font-bold text-red-400 mb-3">Action Required: Authorize Domain</h2>
                     <p className="text-gray-300 mb-6">
                         The app cannot use Google Sign-In because its domain is not authorized by your Firebase project.
                     </p>
-                    <div className="text-left bg-gray-900 p-4 rounded-md">
-                        <p className="font-semibold text-white">To fix this, you MUST follow these steps:</p>
+                    <div className="text-left bg-background-primary p-4 rounded-md">
+                        <p className="font-semibold text-text-primary">To fix this, you MUST follow these steps:</p>
                         <ol className="list-decimal list-inside ml-2 mt-2 space-y-2 text-gray-300">
                             <li>
                                 Click the button below to open your Firebase project settings.
@@ -273,14 +273,14 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
                             </li>
                             <li>
                                 Enter the following domain and click Add:
-                                <div className="mt-2 p-2 bg-gray-700 rounded-md text-center font-mono text-purple-300">
+                                <div className="mt-2 p-2 bg-background-tertiary rounded-md text-center font-mono text-accent">
                                     {typeof window !== 'undefined' ? window.location.hostname : 'your-domain.com'}
                                 </div>
                             </li>
                         </ol>
                     </div>
-                    <p className="mt-6 text-sm text-gray-400">
-                        After adding the domain, please <button onClick={() => window.location.reload()} className="text-purple-400 underline hover:text-purple-300">refresh this page</button>.
+                    <p className="mt-6 text-sm text-text-secondary">
+                        After adding the domain, please <button onClick={() => window.location.reload()} className="text-accent underline hover:text-accent-hover">refresh this page</button>.
                     </p>
                 </div>
             </div>
@@ -291,14 +291,14 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
     const renderMainContent = () => {
         if (mode === 'reset') {
             return (
-                 <div className="bg-gray-800 rounded-lg shadow-xl p-8">
-                    <h2 className="text-2xl font-bold text-center text-white mb-2">Forgot Password?</h2>
-                    <p className="text-center text-gray-400 mb-6">Enter your email and we'll send you a link to reset your password.</p>
+                 <div className="bg-background-secondary rounded-xl shadow-xl p-8 border border-border-color">
+                    <h2 className="text-2xl font-bold text-center text-text-primary mb-2">Forgot Password?</h2>
+                    <p className="text-center text-text-secondary mb-6">Enter your email and we'll send you a link to reset your password.</p>
                     {resetEmailSent ? (
                          <div className="text-center py-4">
                             <p className="text-green-400 font-semibold">✅ Reset link sent!</p>
-                            <p className="text-gray-300 mt-1">Please check your inbox.</p>
-                            <button onClick={() => handleModeChange('login')} className="mt-6 text-sm font-semibold text-purple-400 hover:text-purple-300">
+                            <p className="text-text-secondary mt-1">Please check your inbox.</p>
+                            <button onClick={() => handleModeChange('login')} className="mt-6 text-sm font-semibold text-accent hover:text-accent-hover">
                                 &larr; Back to Sign In
                             </button>
                         </div>
@@ -306,11 +306,11 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
                         <form onSubmit={handleResetPassword} className="space-y-4">
                             <InputField id="email" type="email" placeholder="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
                             {error && <p className="text-red-400 text-sm text-center">{error}</p>}
-                            <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50">
+                            <button type="submit" disabled={isLoading} className="w-full bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-accent-hover transition-opacity disabled:opacity-50">
                                 {isLoading ? 'Sending...' : 'Send Reset Link'}
                             </button>
                              <div className="text-center pt-2">
-                                <button type="button" onClick={() => handleModeChange('login')} className="text-sm font-semibold text-gray-400 hover:text-white">
+                                <button type="button" onClick={() => handleModeChange('login')} className="text-sm font-semibold text-text-secondary hover:text-text-primary">
                                     Cancel
                                 </button>
                             </div>
@@ -320,10 +320,10 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
             )
         }
         return (
-            <div className="bg-gray-800 rounded-lg shadow-xl p-8">
-                <div className="flex border-b border-gray-700 mb-6">
-                    <button onClick={() => handleModeChange('login')} className={`w-1/2 py-3 font-semibold transition-colors ${mode === 'login' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-gray-400'}`}>Sign In</button>
-                    <button onClick={() => handleModeChange('register')} className={`w-1/2 py-3 font-semibold transition-colors ${mode === 'register' ? 'text-purple-400 border-b-2 border-purple-400' : 'text-gray-400'}`}>Create Account</button>
+            <div className="bg-background-secondary rounded-xl shadow-xl p-8 border border-border-color">
+                <div className="flex border-b border-border-color mb-6">
+                    <button onClick={() => handleModeChange('login')} className={`w-1/2 py-3 font-semibold transition-colors ${mode === 'login' ? 'text-accent border-b-2 border-accent' : 'text-text-secondary'}`}>Sign In</button>
+                    <button onClick={() => handleModeChange('register')} className={`w-1/2 py-3 font-semibold transition-colors ${mode === 'register' ? 'text-accent border-b-2 border-accent' : 'text-text-secondary'}`}>Create Account</button>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
@@ -331,7 +331,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
 
                     <div className="relative">
                         <InputField id="password" type={showPassword ? 'text' : 'password'} placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white" aria-label={showPassword ? "Hide password" : "Show password"}>
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-text-secondary hover:text-text-primary" aria-label={showPassword ? "Hide password" : "Show password"}>
                             {showPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                         </button>
                     </div>
@@ -339,7 +339,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
                     {mode === 'register' && (
                          <div className="relative">
                             <InputField id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirm Password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
-                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-white" aria-label={showConfirmPassword ? "Hide password" : "Show password"}>
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-text-secondary hover:text-text-primary" aria-label={showConfirmPassword ? "Hide password" : "Show password"}>
                                 {showConfirmPassword ? <EyeSlashIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
                             </button>
                         </div>
@@ -347,7 +347,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
                     
                     {mode === 'login' && (
                         <div className="text-right -mt-2">
-                           <button type="button" onClick={() => handleModeChange('reset')} className="text-xs font-semibold text-purple-400 hover:text-purple-300 transition-colors">
+                           <button type="button" onClick={() => handleModeChange('reset')} className="text-xs font-semibold text-accent hover:text-accent-hover transition-colors">
                                 Forgot Password?
                            </button>
                         </div>
@@ -355,17 +355,17 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
 
                     {error && <p className="text-red-400 text-sm text-center">{error}</p>}
 
-                    <button type="submit" disabled={isLoading} className="w-full bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-4 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50">
+                    <button type="submit" disabled={isLoading} className="w-full bg-accent text-white font-bold py-3 px-4 rounded-lg hover:bg-accent-hover transition-opacity disabled:opacity-50">
                         {isLoading ? 'Processing...' : (mode === 'login' ? 'Sign In' : 'Create Account')}
                     </button>
                 </form>
 
                 <div className="relative flex items-center justify-center my-6">
                     <div className="absolute inset-0 flex items-center">
-                        <div className="w-full border-t border-gray-600"></div>
+                        <div className="w-full border-t border-border-color"></div>
                     </div>
                     <div className="relative flex justify-center text-sm">
-                        <span className="px-2 bg-gray-800 text-gray-400">OR</span>
+                        <span className="px-2 bg-background-secondary text-text-secondary">OR</span>
                     </div>
                 </div>
 
@@ -383,13 +383,14 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
     };
 
     return (
-        <div className="bg-gray-900 text-white min-h-screen flex flex-col items-center justify-center p-4 font-sans">
-            <div className="w-full max-w-md">
+        <div className="bg-background-primary text-text-primary min-h-screen flex flex-col items-center justify-center p-4 font-sans relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-accent/10 via-transparent to-transparent"></div>
+            <div className="w-full max-w-md z-10">
                 <div className="text-center mb-8">
-                    <h1 className="text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+                    <h1 className="text-5xl font-bold text-accent">
                         NinoVisk
                     </h1>
-                    <p className="text-gray-400 mt-2">Your new favorite social space.</p>
+                    <p className="text-text-secondary mt-2">Your new favorite social space.</p>
                 </div>
                 {renderMainContent()}
             </div>

@@ -99,7 +99,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center animate-fade-in">
-      <div className="relative w-full max-w-md h-full max-h-[95vh] bg-gray-900 rounded-lg overflow-hidden flex flex-col">
+      <div className="relative w-full max-w-md h-full max-h-[95vh] bg-background-secondary rounded-lg overflow-hidden flex flex-col">
         {/* Progress Bars */}
         <div className="absolute top-2 left-2 right-2 flex space-x-1 z-20">
           {userStories.map((_, index) => (
@@ -135,7 +135,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
                     className="max-h-full max-w-full object-contain" 
                     onEnded={goToNext}
                     playsInline
-                    muted // autoplay often requires video to be muted
+                    autoPlay
                 />
             )}
         </div>

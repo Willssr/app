@@ -438,12 +438,12 @@ export default function App() {
 
   if (authLoading) {
     return (
-      <div className="bg-gray-900 min-h-screen flex items-center justify-center text-white">
+      <div className="bg-background-primary min-h-screen flex items-center justify-center text-text-primary">
           <div className="text-center">
-              <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">
+              <h1 className="text-4xl font-bold text-accent">
                   NinoVisk
               </h1>
-              <p className="mt-2 text-gray-400">Loading...</p>
+              <p className="mt-2 text-text-secondary animate-pulse">Loading...</p>
           </div>
       </div>
     );
@@ -489,7 +489,7 @@ export default function App() {
     
     switch (view.tab) {
       case 'feed':
-        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} />;
+        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} stories={stories} onViewStories={handleViewStories} />;
       case 'ranking':
         return <Ranking users={users} />;
       case 'analytics':
@@ -513,14 +513,14 @@ export default function App() {
         if (!isAdmin) return null;
         return <Review pendingPosts={posts.filter(p => p.status === 'pending')} onApprove={handleApprovePost} onReject={handleRejectPost} />;
       default:
-        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} />;
+        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} stories={stories} onViewStories={handleViewStories} />;
     }
   };
 
   const activeTab = view.type === 'tab' ? view.tab : (view.type === 'profile' && view.userId === currentUser.id ? 'profile' : undefined);
 
   return (
-    <div className="bg-gray-900 text-white min-h-screen font-sans flex flex-col">
+    <div className="bg-background-primary text-text-primary min-h-screen font-sans flex flex-col">
       <Header user={currentUser} onSignOut={handleSignOut} />
       {isLimitedMode && <LimitedModeBanner />}
       <main className="flex-grow container mx-auto px-4 py-4 mb-16">

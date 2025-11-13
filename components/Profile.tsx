@@ -12,7 +12,7 @@ interface ProfileProps {
     friendRequests: FriendRequest[];
     onSendFriendRequest: (toId: string) => void;
     onBlockUser: (userId: string) => void;
-    onViewStories: (userId: string) => void;
+    onViewStories: (userId:string) => void;
     onCreateStory: () => void;
 }
 
@@ -45,7 +45,7 @@ const Profile: React.FC<ProfileProps> = ({ user, posts, stories, onEditProfile, 
             return (
                 <button
                     onClick={onEditProfile}
-                    className="mt-4 bg-gray-700 hover:bg-gray-600 text-white font-semibold py-2 px-4 rounded-full transition-colors duration-200"
+                    className="mt-4 bg-background-tertiary hover:bg-border-color text-text-primary font-semibold py-2 px-4 rounded-full transition-colors duration-200"
                 >
                     Edit Profile
                 </button>
@@ -55,12 +55,12 @@ const Profile: React.FC<ProfileProps> = ({ user, posts, stories, onEditProfile, 
         return (
             <div className="mt-4 flex items-center justify-center space-x-2">
                 {status === 'none' && (
-                    <button onClick={() => onSendFriendRequest(user.id)} className="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-full">
+                    <button onClick={() => onSendFriendRequest(user.id)} className="bg-accent hover:bg-accent-hover text-white font-bold py-2 px-4 rounded-full">
                         Add Friend
                     </button>
                 )}
                  {status === 'pending' && (
-                    <button className="bg-gray-600 text-white font-bold py-2 px-4 rounded-full cursor-not-allowed">
+                    <button className="bg-background-tertiary text-text-primary font-bold py-2 px-4 rounded-full cursor-not-allowed">
                         Pending
                     </button>
                 )}
@@ -80,14 +80,14 @@ const Profile: React.FC<ProfileProps> = ({ user, posts, stories, onEditProfile, 
     return (
         <div className="max-w-4xl mx-auto">
              {!isOwnProfile && (
-                <button onClick={onBack} className="mb-4 text-purple-400 hover:text-purple-300">
+                <button onClick={onBack} className="mb-4 text-accent hover:text-accent-hover">
                     &larr; Back to Feed
                 </button>
             )}
             {/* Header section */}
             <div className="relative">
                 <div 
-                    className="h-48 md:h-64 bg-gray-700 rounded-t-lg bg-cover bg-center"
+                    className="h-48 md:h-64 bg-background-tertiary rounded-t-xl bg-cover bg-center"
                     style={{ backgroundImage: `url(${user.coverPhoto || 'https://via.placeholder.com/1200x400'})` }}
                 >
                 </div>
@@ -95,20 +95,20 @@ const Profile: React.FC<ProfileProps> = ({ user, posts, stories, onEditProfile, 
                    <div className="relative">
                      <button 
                         onClick={() => hasActiveStories && onViewStories(user.id)} 
-                        className={`rounded-full block ${hasActiveStories ? 'p-1 bg-gradient-to-tr from-purple-400 to-pink-500' : ''}`}
+                        className={`rounded-full block transition-transform duration-200 ${hasActiveStories ? 'p-1 bg-gradient-to-tr from-accent to-pink-500 hover:scale-105' : ''}`}
                         disabled={!hasActiveStories}
                         aria-label="View stories"
                       >
                         <img 
                             src={user.avatar} 
                             alt={user.name} 
-                            className="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-gray-900 object-cover"
+                            className="w-28 h-28 md:w-36 md:h-36 rounded-full border-4 border-background-primary object-cover"
                         />
                      </button>
                      {isOwnProfile && (
                          <button 
                             onClick={onCreateStory}
-                            className="absolute -bottom-1 -right-1 bg-blue-500 hover:bg-blue-600 rounded-full h-8 w-8 flex items-center justify-center border-2 border-gray-900"
+                            className="absolute -bottom-1 -right-1 bg-blue-500 hover:bg-blue-600 rounded-full h-8 w-8 flex items-center justify-center border-2 border-background-primary"
                             aria-label="Add to your story"
                         >
                             <PlusIcon className="h-5 w-5 text-white" />
@@ -119,14 +119,14 @@ const Profile: React.FC<ProfileProps> = ({ user, posts, stories, onEditProfile, 
             </div>
 
             {/* User Info section */}
-            <div className="bg-gray-800 rounded-b-lg pt-20 pb-6 px-6 text-center shadow-xl">
-                <h1 className="text-3xl font-bold text-white">{user.name}</h1>
-                <p className="text-gray-400 mt-2 max-w-lg mx-auto">{user.bio || 'No bio yet.'}</p>
+            <div className="bg-background-secondary rounded-b-xl pt-20 pb-6 px-6 text-center shadow-xl border border-t-0 border-border-color">
+                <h1 className="text-3xl font-bold text-text-primary">{user.name}</h1>
+                <p className="text-text-secondary mt-2 max-w-lg mx-auto">{user.bio || 'No bio yet.'}</p>
                 {renderActionButtons()}
                 
                 {user.profileMusicUrl && (
                     <div className="mt-6">
-                        <p className="text-sm text-gray-500 mb-2">Vibe</p>
+                        <p className="text-sm text-text-secondary mb-2">Vibe</p>
                         <audio controls src={user.profileMusicUrl} className="w-full max-w-xs mx-auto h-10">
                             Your browser does not support the audio element.
                         </audio>
@@ -136,13 +136,13 @@ const Profile: React.FC<ProfileProps> = ({ user, posts, stories, onEditProfile, 
 
             {/* User Posts section */}
             <div className="mt-8">
-                <h2 className="text-2xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">Posts</h2>
+                <h2 className="text-2xl font-bold text-center text-accent">Posts</h2>
                 {userPosts.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4 mt-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-1 md:gap-2 mt-4">
                         {userPosts.map(post => (
-                            <div key={post.id} className="aspect-square bg-gray-800 rounded-lg overflow-hidden group relative">
+                            <div key={post.id} className="aspect-square bg-background-secondary rounded-lg overflow-hidden group relative">
                                 {post.type === 'image' ? (
-                                    <img src={post.url} alt={post.caption} className="w-full h-full object-cover" />
+                                    <img src={post.url} alt={post.caption} className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110" />
                                 ) : (
                                     <video src={post.url} className="w-full h-full object-cover" />
                                 )}
@@ -160,7 +160,7 @@ const Profile: React.FC<ProfileProps> = ({ user, posts, stories, onEditProfile, 
                         ))}
                     </div>
                 ) : (
-                    <p className="text-center text-gray-500 mt-4">No posts yet.</p>
+                    <p className="text-center text-text-secondary mt-4">No posts yet.</p>
                 )}
             </div>
         </div>

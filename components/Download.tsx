@@ -12,15 +12,15 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 const InstructionCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-    <div className="bg-gray-800 p-6 rounded-lg shadow-xl">
-        <h3 className="text-xl font-bold mb-4 text-purple-400">{title}</h3>
-        <div className="space-y-3 text-gray-300">{children}</div>
+    <div className="bg-background-secondary p-6 rounded-xl shadow-xl border border-border-color">
+        <h3 className="text-xl font-bold mb-4 text-accent">{title}</h3>
+        <div className="space-y-3 text-text-secondary">{children}</div>
     </div>
 );
 
 const InstructionStep: React.FC<{ icon: React.ReactNode; text: string; }> = ({ icon, text }) => (
     <div className="flex items-center space-x-4">
-        <div className="bg-gray-700 p-2 rounded-md">{icon}</div>
+        <div className="bg-background-tertiary p-2 rounded-md">{icon}</div>
         <span>{text}</span>
     </div>
 );
@@ -64,31 +64,31 @@ const Download: React.FC = () => {
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center">
-                <h2 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-600">Install NinoVisk</h2>
-                <p className="mt-2 text-gray-400">
+                <h2 className="text-3xl font-bold text-accent">Install NinoVisk</h2>
+                <p className="mt-2 text-text-secondary">
                     Add NinoVisk to your home screen for a faster, app-like experience.
                 </p>
             </div>
             
-            <div className="bg-gray-800 p-6 rounded-lg shadow-xl text-center">
+            <div className="bg-background-secondary p-6 rounded-xl shadow-xl text-center border border-border-color">
                 {isAppInstalled ? (
                      <p className="text-green-400 font-semibold">NinoVisk is already installed on your device!</p>
                 ) : deferredPrompt ? (
                     <button 
                         onClick={handleInstallClick}
-                        className="bg-gradient-to-r from-purple-500 to-pink-500 text-white font-bold py-3 px-6 rounded-full hover:scale-105 transition-transform duration-200 flex items-center justify-center w-full"
+                        className="bg-gradient-to-r from-accent to-pink-500 text-white font-bold py-3 px-6 rounded-full hover:scale-105 transition-transform duration-200 flex items-center justify-center w-full"
                     >
                         <DownloadIcon className="w-6 h-6 mr-2" />
                         Install NinoVisk App
                     </button>
                 ) : (
-                    <p className="text-gray-400">Installation is not currently available on your browser, but you can follow the manual steps below.</p>
+                    <p className="text-text-secondary">Installation is not currently available on your browser, but you can follow the manual steps below.</p>
                 )}
             </div>
 
             <InstructionCard title="For iOS / Safari">
                 <InstructionStep
-                    icon={<ShareIOSIcon className="w-6 h-6 text-white" />}
+                    icon={<ShareIOSIcon className="w-6 h-6 text-text-primary" />}
                     text="Tap the 'Share' button in the bottom menu."
                 />
                  <InstructionStep
@@ -103,7 +103,7 @@ const Download: React.FC = () => {
 
             <InstructionCard title="For Android / Chrome">
                 <InstructionStep
-                    icon={<MenuAndroidIcon className="w-6 h-6 text-white" />}
+                    icon={<MenuAndroidIcon className="w-6 h-6 text-text-primary" />}
                     text="Tap the three-dot menu icon in the top right corner."
                 />
                  <InstructionStep
