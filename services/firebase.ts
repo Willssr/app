@@ -42,6 +42,7 @@ export {
 
 /**
  * Checks if a user profile exists in Firestore. If not, creates one.
+ * Also ensures the Firebase Auth profile's displayName is set.
  * @param {FirebaseUser} user - The user object from Firebase Authentication.
  * @returns {Promise<AppUser>} The user profile from Firestore.
  */
@@ -53,16 +54,18 @@ export const getOrCreateUserProfile = async (user: FirebaseUser): Promise<AppUse
         // User is new, create a profile document
         const { displayName, photoURL, uid, email } = user;
 
-        // Handle a race condition where updateProfile hasn't finished before this runs.
+        // Handle a race condition where the displayName hasn't been set yet.
         // If displayName is null and the email is our custom format, extract the ID from it.
         let profileName = displayName;
         if (!profileName && email && email.endsWith('@ninovisk.app')) {
             profileName = email.split('@')[0];
         }
         
+        const finalName = profileName || 'New User';
+
         const newUserProfile: AppUser = {
             id: uid,
-            name: profileName || 'New User',
+            name: finalName,
             email: email || undefined,
             avatar: photoURL || `https://picsum.photos/seed/${uid}/100/100`,
             points: 0,
@@ -73,7 +76,15 @@ export const getOrCreateUserProfile = async (user: FirebaseUser): Promise<AppUse
             blockedUsers: [],
         };
         
-        await setDoc(userRef, newUserProfile);
+        // Create the Firestore doc and update the Auth profile concurrently.
+        await Promise.all([
+            setDoc(userRef, newUserProfile),
+            // Only update the auth profile if the displayName isn't already set to the correct name.
+            (!displayName || displayName !== finalName) && finalName !== 'New User' 
+                ? updateProfile(user, { displayName: finalName }) 
+                : Promise.resolve()
+        ]);
+        
         return newUserProfile;
     } else {
         // User exists, return their profile

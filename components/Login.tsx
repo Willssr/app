@@ -80,8 +80,8 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
             }
             try {
                 const emailForFirebase = `${id}@ninovisk.app`;
-                const userCredential = await createUserWithEmailAndPassword(auth, emailForFirebase, password);
-                await updateProfile(userCredential.user, { displayName: id });
+                // The onAuthStateChanged listener will now handle all profile creation.
+                await createUserWithEmailAndPassword(auth, emailForFirebase, password);
             } catch (err: any) {
                 setError(getFriendlyErrorMessage(err.code));
             } finally {
