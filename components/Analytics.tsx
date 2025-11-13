@@ -30,11 +30,11 @@ const Analytics: React.FC<AnalyticsProps> = ({ posts }) => {
     setIsLoading(false);
   }, [locationData]);
 
-  const COLORS = ['#A855F7', '#EC4899', '#3B82F6', '#10B981', '#F59E0B', '#EF4444'];
+  const COLORS = ['#3B82F6', '#8B5CF6', '#EC4899', '#10B981', '#F59E0B', '#EF4444'];
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto">
-      <h2 className="text-3xl font-bold text-center mb-6 text-accent">Analytics</h2>
+      <h2 className="text-3xl font-bold text-center mb-6 text-text-primary">Analytics</h2>
       
       {/* Engagement Analytics */}
       <div className="bg-background-secondary border border-border-color rounded-xl p-6 shadow-xl">
@@ -42,13 +42,13 @@ const Analytics: React.FC<AnalyticsProps> = ({ posts }) => {
         <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
                 <BarChart data={engagementData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis dataKey="name" stroke="#9CA3AF" />
-                    <YAxis stroke="#9CA3AF" />
-                    <Tooltip contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #374151', color: '#F9FAFB' }} />
-                    <Legend wrapperStyle={{ color: '#F9FAFB' }} />
-                    <Bar dataKey="likes" fill="#A855F7" />
-                    <Bar dataKey="comments" fill="#EC4899" />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2F2F2F" />
+                    <XAxis dataKey="name" stroke="#A3A3A3" />
+                    <YAxis stroke="#A3A3A3" />
+                    <Tooltip contentStyle={{ backgroundColor: '#121212', border: '1px solid #2F2F2F', color: '#E5E5E5' }} />
+                    <Legend wrapperStyle={{ color: '#E5E5E5' }} />
+                    <Bar dataKey="likes" fill="#3B82F6" />
+                    <Bar dataKey="comments" fill="#8B5CF6" />
                 </BarChart>
             </ResponsiveContainer>
         </div>
@@ -60,11 +60,11 @@ const Analytics: React.FC<AnalyticsProps> = ({ posts }) => {
         <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
                  <BarChart data={locationData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                    <XAxis type="number" stroke="#9CA3AF" />
-                    <YAxis type="category" dataKey="city" stroke="#9CA3AF" width={100} />
-                    <Tooltip contentStyle={{ backgroundColor: '#1A1A1A', border: '1px solid #374151' }} />
-                    <Legend wrapperStyle={{ color: '#F9FAFB' }} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#2F2F2F" />
+                    <XAxis type="number" stroke="#A3A3A3" />
+                    <YAxis type="category" dataKey="city" stroke="#A3A3A3" width={100} />
+                    <Tooltip contentStyle={{ backgroundColor: '#121212', border: '1px solid #2F2F2F' }} />
+                    <Legend wrapperStyle={{ color: '#E5E5E5' }} />
                     <Bar dataKey="count" name="Users" fill="#8884d8">
                        {locationData.map((entry, index) => (
                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -78,7 +78,7 @@ const Analytics: React.FC<AnalyticsProps> = ({ posts }) => {
           <button 
             onClick={handleAnalyzeClick} 
             disabled={isLoading}
-            className="bg-gradient-to-r from-accent to-pink-500 text-white font-bold py-2 px-6 rounded-full hover:scale-105 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-accent hover:bg-accent-hover text-white font-bold py-2 px-6 rounded-full hover:scale-105 transition-transform duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? 'Analyzing...' : 'Get AI Insights'}
           </button>

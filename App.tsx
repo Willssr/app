@@ -22,13 +22,44 @@ import StoryViewer from './components/StoryViewer';
 import CreateStoryModal from './components/CreateStoryModal';
 import Login from './components/Login';
 import Download from './components/Download';
+import Settings from './components/Settings';
 import LimitedModeBanner from './components/LimitedModeBanner';
+import { ArrowLeftIcon } from './constants';
 
-type ActiveTab = 'feed' | 'ranking' | 'analytics' | 'friends' | 'notifications' | 'profile' | 'review' | 'download';
+const PrivacySecurity: React.FC<{ onBack: () => void; }> = ({ onBack }) => {
+    return (
+        <div className="max-w-2xl mx-auto">
+             <div className="flex items-center justify-between mb-6">
+                 <h2 className="text-3xl font-bold text-text-primary">Privacy & Security</h2>
+                <button onClick={onBack} className="text-accent hover:underline flex items-center space-x-2">
+                    <ArrowLeftIcon className="w-5 h-5" />
+                    <span>Settings</span>
+                </button>
+            </div>
+            <div className="bg-background-secondary p-6 rounded-xl shadow-xl border border-border-color space-y-4">
+                <p className="text-text-secondary">This page is a placeholder for privacy and security settings. In a real application, you would be able to configure account privacy, manage blocked users, control data sharing, and set up two-factor authentication here.</p>
+                 <div className="pt-4">
+                    <h3 className="text-xl font-semibold text-text-primary">Coming Soon:</h3>
+                    <ul className="list-disc list-inside mt-2 text-text-secondary space-y-1">
+                        <li>Manage Blocked Users</li>
+                        <li>Two-Factor Authentication (2FA)</li>
+                        <li>Login Activity</li>
+                        <li>Data Download Request</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    );
+};
+
+
+type ActiveTab = 'feed' | 'ranking' | 'friends' | 'notifications' | 'profile' | 'analytics' | 'review';
 type View = 
-  | { type: 'tab'; tab: ActiveTab }
+  | { type: 'tab'; tab: ActiveTab | 'download' }
   | { type: 'profile'; userId: string }
-  | { type: 'chat'; userId: string };
+  | { type: 'chat'; userId: string }
+  | { type: 'settings' }
+  | { type: 'privacy' };
 
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -436,11 +467,20 @@ export default function App() {
     }
   }, [users]);
 
+  const handleRefresh = useCallback(async () => {
+    // This is a mock refresh. In a real app, you'd fetch new posts.
+    // For this demo, we'll shuffle the existing posts to simulate a refresh.
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate network latency
+    setPosts(currentPosts => 
+        [...currentPosts].sort(() => Math.random() - 0.5)
+    );
+  }, []);
+
   if (authLoading) {
     return (
       <div className="bg-background-primary min-h-screen flex items-center justify-center text-text-primary">
           <div className="text-center">
-              <h1 className="text-4xl font-bold text-accent">
+              <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
                   NinoVisk
               </h1>
               <p className="mt-2 text-text-secondary animate-pulse">Loading...</p>
@@ -487,12 +527,26 @@ export default function App() {
         />
     }
     
+    if (view.type === 'settings') {
+        return <Settings 
+            onSignOut={handleSignOut} 
+            onEditProfile={() => setIsEditProfileModalOpen(true)} 
+            onNavigateToDownload={() => setView({ type: 'tab', tab: 'download' })}
+            onNavigateToPrivacy={() => setView({ type: 'privacy' })}
+        />;
+    }
+
+    if (view.type === 'privacy') {
+        return <PrivacySecurity onBack={() => setView({ type: 'settings' })} />;
+    }
+
     switch (view.tab) {
       case 'feed':
-        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} stories={stories} onViewStories={handleViewStories} />;
+        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} stories={stories} onViewStories={handleViewStories} onRefresh={handleRefresh} />;
       case 'ranking':
         return <Ranking users={users} />;
       case 'analytics':
+        if (!isAdmin) return null;
         return <Analytics posts={posts} />;
       case 'friends':
         return <Friends 
@@ -504,7 +558,7 @@ export default function App() {
             onViewChat={(userId) => setView({ type: 'chat', userId })}
         />
       case 'notifications':
-        return <Notifications notifications={notifications} />;
+        return <Notifications notifications={notifications} onViewProfile={(userId) => setView({ type: 'profile', userId })} />;
        case 'download':
         return <Download />;
       case 'profile': // This case is handled by handleSetActiveTab
@@ -513,25 +567,27 @@ export default function App() {
         if (!isAdmin) return null;
         return <Review pendingPosts={posts.filter(p => p.status === 'pending')} onApprove={handleApprovePost} onReject={handleRejectPost} />;
       default:
-        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} stories={stories} onViewStories={handleViewStories} />;
+        return <Feed posts={posts} currentUser={currentUser} onLike={handleLikeToggle} onAddComment={handleAddComment} onCreatePost={() => setIsCreateModalOpen(true)} onViewProfile={(userId) => setView({ type: 'profile', userId })} stories={stories} onViewStories={handleViewStories} onRefresh={handleRefresh} />;
     }
   };
 
   const activeTab = view.type === 'tab' ? view.tab : (view.type === 'profile' && view.userId === currentUser.id ? 'profile' : undefined);
+  const showHeader = view.type !== 'chat' && view.type !== 'privacy';
+  const showBottomNav = (view.type === 'tab' && view.tab !== 'download') || (view.type === 'profile' && view.userId === currentUser.id);
 
   return (
     <div className="bg-background-primary text-text-primary min-h-screen font-sans flex flex-col">
-      <Header user={currentUser} onSignOut={handleSignOut} />
+      {showHeader && <Header onSettingsClick={() => setView({ type: 'settings' })} />}
       {isLimitedMode && <LimitedModeBanner />}
-      <main className="flex-grow container mx-auto px-4 py-4 mb-16">
+      <main className={`flex-grow container mx-auto px-2 sm:px-4 py-4 ${showBottomNav ? 'mb-16' : ''}`}>
         {renderContent()}
       </main>
-      <BottomNav 
+      {showBottomNav && <BottomNav 
         activeTab={activeTab} 
         setActiveTab={handleSetActiveTab} 
         isAdmin={!!isAdmin}
         hasUnreadNotifications={hasUnreadNotifications}
-      />
+      />}
       {isCreateModalOpen && <CreatePostModal onClose={() => setIsCreateModalOpen(false)} onCreate={handleCreatePost} />}
       {isEditProfileModalOpen && <EditProfileModal currentUser={currentUser} onClose={() => setIsEditProfileModalOpen(false)} onUpdate={handleUpdateProfile} />}
       {isCreateStoryModalOpen && <CreateStoryModal onClose={() => setCreateStoryModalOpen(false)} onCreate={handleCreateStory} />}

@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#0D0D0D">
+    <meta name="theme-color" content="#000000">
     <title>NinoVisk</title>
     <link rel="manifest" href="/manifest.json" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,14 +19,24 @@
               sans: ['Inter', 'sans-serif'],
             },
             colors: {
-              'background-primary': '#0D0D0D',
-              'background-secondary': '#1A1A1A',
-              'background-tertiary': '#282828',
-              'accent': '#A855F7',
-              'accent-hover': '#9333EA',
-              'text-primary': '#F9FAFB',
-              'text-secondary': '#9CA3AF',
-              'border-color': '#374151',
+              'background-primary': '#000000',
+              'background-secondary': '#121212',
+              'background-tertiary': '#1F1F1F',
+              'accent': '#3B82F6', // Blue-500
+              'accent-hover': '#2563EB', // Blue-600
+              'text-primary': '#E5E5E5',
+              'text-secondary': '#A3A3A3',
+              'border-color': '#2F2F2F',
+            },
+            animation: {
+              'like-pop': 'like-pop 0.4s ease-out',
+            },
+            keyframes: {
+              'like-pop': {
+                '0%': { transform: 'scale(1)' },
+                '50%': { transform: 'scale(1.4)' },
+                '100%': { transform: 'scale(1)' },
+              }
             }
           }
         }

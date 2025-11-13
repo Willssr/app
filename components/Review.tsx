@@ -4,7 +4,7 @@ import { Post } from '../types';
 interface ReviewProps {
     pendingPosts: Post[];
     onApprove: (postId: string) => void;
-    onReject: (postId: string) => void;
+    onReject: (postId:string) => void;
 }
 
 const Review: React.FC<ReviewProps> = ({ pendingPosts, onApprove, onReject }) => {
@@ -26,7 +26,7 @@ const Review: React.FC<ReviewProps> = ({ pendingPosts, onApprove, onReject }) =>
 
     return (
         <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-center mb-6 text-accent">Posts for Review</h2>
+            <h2 className="text-3xl font-bold text-center mb-6 text-text-primary">Posts for Review</h2>
             <div className="space-y-4">
                 {pendingPosts.length > 0 ? (
                     pendingPosts.map(post => (
@@ -40,16 +40,16 @@ const Review: React.FC<ReviewProps> = ({ pendingPosts, onApprove, onReject }) =>
                             </div>
 
                              {post.type === 'image' ? (
-                                <img src={post.url} alt={post.caption} className="w-full object-cover max-h-96" />
+                                <img src={post.url} alt={post.caption} className="w-full object-cover max-h-96 bg-black" />
                             ) : (
-                                <video src={post.url} controls className="w-full max-h-96" />
+                                <video src={post.url} controls className="w-full max-h-96 bg-black" />
                             )}
 
                             <div className="p-4">
                                <p className="text-text-primary">{post.caption}</p>
                             </div>
 
-                            <div className="p-4 bg-background-primary/50 flex justify-end space-x-3">
+                            <div className="p-4 bg-background-tertiary/50 flex justify-end space-x-3">
                                 <button onClick={() => onReject(post.id)} className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition-colors">
                                     Reject
                                 </button>
@@ -60,7 +60,9 @@ const Review: React.FC<ReviewProps> = ({ pendingPosts, onApprove, onReject }) =>
                         </div>
                     ))
                 ) : (
-                    <p className="text-center text-text-secondary mt-8">No posts are currently pending review.</p>
+                    <div className="text-center text-text-secondary mt-8 bg-background-secondary py-10 rounded-lg">
+                        <p>No posts are currently pending review.</p>
+                    </div>
                 )}
             </div>
         </div>

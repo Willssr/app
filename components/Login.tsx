@@ -189,7 +189,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
         return (
             <div className="bg-background-primary text-text-primary min-h-screen flex flex-col items-center justify-center p-4">
                 <div className="text-center w-full max-w-md bg-background-secondary p-8 rounded-lg shadow-xl border border-border-color">
-                    <h1 className="text-4xl font-bold text-accent mb-2">
+                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
                         NinoVisk
                     </h1>
                     <p className="text-text-secondary mb-6">Firebase is not configured. Please select a mock user to continue.</p>
@@ -347,7 +347,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
                     
                     {mode === 'login' && (
                         <div className="text-right -mt-2">
-                           <button type="button" onClick={() => handleModeChange('reset')} className="text-xs font-semibold text-accent hover:text-accent-hover transition-colors">
+                           <button type="button" onClick={() => handleModeChange('reset')} className="text-xs font-semibold text-accent hover:underline transition-colors">
                                 Forgot Password?
                            </button>
                         </div>
@@ -373,7 +373,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
                     type="button"
                     onClick={handleGoogleSignIn}
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center bg-white text-gray-700 font-semibold py-3 px-4 rounded-lg hover:bg-gray-200 transition-colors disabled:opacity-50"
+                    className="w-full flex items-center justify-center bg-background-tertiary text-text-primary font-semibold py-3 px-4 rounded-lg hover:bg-border-color transition-colors disabled:opacity-50"
                 >
                     <GoogleIcon className="w-6 h-6 mr-3" />
                     Sign in with Google
@@ -387,7 +387,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
             <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-accent/10 via-transparent to-transparent"></div>
             <div className="w-full max-w-md z-10">
                 <div className="text-center mb-8">
-                    <h1 className="text-5xl font-bold text-accent">
+                    <h1 className="text-5xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500">
                         NinoVisk
                     </h1>
                     <p className="text-text-secondary mt-2">Your new favorite social space.</p>

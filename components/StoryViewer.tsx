@@ -98,14 +98,14 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center animate-fade-in">
-      <div className="relative w-full max-w-md h-full max-h-[95vh] bg-background-secondary rounded-lg overflow-hidden flex flex-col">
+    <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center">
+      <div className="relative w-full max-w-sm h-full max-h-[90vh] bg-background-secondary rounded-lg overflow-hidden flex flex-col shadow-2xl">
         {/* Progress Bars */}
-        <div className="absolute top-2 left-2 right-2 flex space-x-1 z-20">
+        <div className="absolute top-3 left-2 right-2 flex space-x-1 z-20">
           {userStories.map((_, index) => (
             <div key={index} className="flex-1 h-1 bg-white/30 rounded-full">
               <div 
-                className="h-full bg-white rounded-full"
+                className="h-full bg-white rounded-full transition-all duration-100 linear"
                 style={{ width: index < currentIndex ? '100%' : index === currentIndex ? `${progress}%` : '0%' }}
               />
             </div>
@@ -113,18 +113,18 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
         </div>
         
         {/* Header */}
-        <div className="absolute top-5 left-4 flex items-center space-x-2 z-20">
+        <div className="absolute top-6 left-4 flex items-center space-x-2 z-20">
             <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
-            <span className="text-white font-semibold text-sm">{user.name}</span>
+            <span className="text-white font-semibold text-sm drop-shadow-md">{user.name}</span>
         </div>
 
         {/* Close Button */}
-        <button onClick={onClose} className="absolute top-4 right-3 text-white z-20">
-          <XMarkIcon className="w-7 h-7" />
+        <button onClick={onClose} className="absolute top-5 right-3 text-white z-20 p-1">
+          <XMarkIcon className="w-6 h-6" />
         </button>
 
         {/* Content */}
-        <div className="flex-grow flex items-center justify-center">
+        <div className="flex-grow flex items-center justify-center bg-black">
             {currentStory.type === 'image' && (
                 <img src={currentStory.url} alt="Story" className="max-h-full max-w-full object-contain" />
             )}
@@ -136,6 +136,7 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
                     onEnded={goToNext}
                     playsInline
                     autoPlay
+                    muted
                 />
             )}
         </div>

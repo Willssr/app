@@ -33,7 +33,7 @@ const ImageInput: React.FC<{ label: string; currentImageUrl?: string; onFileChan
                 <div className="w-16 h-16 rounded-full bg-background-tertiary overflow-hidden flex-shrink-0">
                     {preview && <img src={preview} alt="Preview" className="w-full h-full object-cover" />}
                 </div>
-                <button type="button" onClick={() => inputRef.current?.click()} className="text-sm bg-background-tertiary hover:bg-border-color text-text-primary font-semibold py-1 px-3 rounded-md transition-colors">
+                <button type="button" onClick={() => inputRef.current?.click()} className="text-sm bg-background-tertiary hover:bg-border-color text-text-primary font-semibold py-2 px-4 rounded-lg transition-colors">
                     Change
                 </button>
             </div>
@@ -72,12 +72,14 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ currentUser, onClos
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-            <div className="bg-background-secondary rounded-xl shadow-xl w-full max-w-lg relative animate-fade-in-up border border-border-color">
-                <button onClick={onClose} className="absolute top-3 right-3 text-text-secondary hover:text-text-primary z-10">
-                    <XMarkIcon className="w-6 h-6" />
-                </button>
-                <h2 className="text-xl font-bold text-center p-4 border-b border-border-color text-text-primary">Edit Profile</h2>
+        <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 p-4">
+            <div className="bg-background-secondary rounded-xl shadow-xl w-full max-w-lg relative border border-border-color">
+                <div className="flex justify-between items-center p-4 border-b border-border-color">
+                    <h2 className="text-xl font-bold text-text-primary">Edit Profile</h2>
+                     <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+                        <XMarkIcon className="w-6 h-6" />
+                    </button>
+                </div>
 
                 <form onSubmit={handleSubmit}>
                     <div className="p-6 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -98,42 +100,42 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({ currentUser, onClos
                         <ImageInput label="Profile Picture" currentImageUrl={currentUser.avatar} onFileChange={setAvatarFile} />
                         
                         <div>
-                            <label htmlFor="name" className="block text-sm font-medium text-text-secondary">Name</label>
+                            <label htmlFor="name" className="block text-sm font-medium text-text-secondary mb-1">Name</label>
                             <input
                                 id="name"
                                 type="text"
                                 value={name}
                                 onChange={(e) => setName(e.target.value)}
-                                className="w-full mt-1 bg-background-tertiary border-border-color rounded-md p-2 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full bg-background-tertiary border border-border-color rounded-lg p-2.5 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
                         
                         <div>
-                            <label htmlFor="bio" className="block text-sm font-medium text-text-secondary">Bio</label>
+                            <label htmlFor="bio" className="block text-sm font-medium text-text-secondary mb-1">Bio</label>
                             <textarea
                                 id="bio"
                                 value={bio}
                                 onChange={(e) => setBio(e.target.value)}
                                 rows={3}
-                                className="w-full mt-1 bg-background-tertiary border-border-color rounded-md p-2 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full bg-background-tertiary border border-border-color rounded-lg p-2.5 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
 
                         <div>
-                            <label htmlFor="music" className="block text-sm font-medium text-text-secondary">Profile Music URL</label>
+                            <label htmlFor="music" className="block text-sm font-medium text-text-secondary mb-1">Profile Music URL</label>
                             <input
                                 id="music"
                                 type="text"
                                 value={musicUrl}
                                 onChange={(e) => setMusicUrl(e.target.value)}
                                 placeholder="e.g., https://example.com/song.mp3"
-                                className="w-full mt-1 bg-background-tertiary border-border-color rounded-md p-2 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
+                                className="w-full bg-background-tertiary border border-border-color rounded-lg p-2.5 text-text-primary placeholder-text-secondary focus:outline-none focus:ring-2 focus:ring-accent"
                             />
                         </div>
                     </div>
 
-                    <div className="p-4 bg-background-primary/50 rounded-b-xl flex justify-end space-x-3">
-                        <button type="button" onClick={onClose} className="bg-background-tertiary hover:bg-border-color text-text-primary font-bold py-2 px-4 rounded-lg transition-opacity">
+                    <div className="p-4 bg-background-secondary border-t border-border-color flex justify-end space-x-3">
+                        <button type="button" onClick={onClose} className="bg-background-tertiary hover:bg-border-color text-text-primary font-bold py-2 px-4 rounded-lg transition-colors">
                             Cancel
                         </button>
                         <button type="submit" className="bg-accent hover:bg-accent-hover text-white font-bold py-2 px-4 rounded-lg transition-opacity">

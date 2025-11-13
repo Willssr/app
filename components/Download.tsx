@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShareIOSIcon, MenuAndroidIcon, DownloadIcon } from '../constants';
+import { DownloadIcon } from '../constants';
 
 // Define the event type for BeforeInstallPromptEvent
 interface BeforeInstallPromptEvent extends Event {
@@ -24,6 +24,15 @@ const InstructionStep: React.FC<{ icon: React.ReactNode; text: string; }> = ({ i
         <span>{text}</span>
     </div>
 );
+
+const ShareIOSIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" /></svg>
+);
+
+const MenuAndroidIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}><path strokeLinecap="round" strokeLinejoin="round" d="M12 6.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 12.75a.75.75 0 110-1.5.75.75 0 010 1.5zM12 18.75a.75.75 0 110-1.5.75.75 0 010 1.5z" /></svg>
+);
+
 
 const Download: React.FC = () => {
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -64,7 +73,7 @@ const Download: React.FC = () => {
     return (
         <div className="max-w-2xl mx-auto space-y-8">
             <div className="text-center">
-                <h2 className="text-3xl font-bold text-accent">Install NinoVisk</h2>
+                <h2 className="text-3xl font-bold text-text-primary">Install NinoVisk</h2>
                 <p className="mt-2 text-text-secondary">
                     Add NinoVisk to your home screen for a faster, app-like experience.
                 </p>
@@ -76,7 +85,7 @@ const Download: React.FC = () => {
                 ) : deferredPrompt ? (
                     <button 
                         onClick={handleInstallClick}
-                        className="bg-gradient-to-r from-accent to-pink-500 text-white font-bold py-3 px-6 rounded-full hover:scale-105 transition-transform duration-200 flex items-center justify-center w-full"
+                        className="bg-accent hover:bg-accent-hover text-white font-bold py-3 px-6 rounded-full hover:scale-105 transition-transform duration-200 flex items-center justify-center w-full"
                     >
                         <DownloadIcon className="w-6 h-6 mr-2" />
                         Install NinoVisk App
@@ -88,7 +97,7 @@ const Download: React.FC = () => {
 
             <InstructionCard title="For iOS / Safari">
                 <InstructionStep
-                    icon={<ShareIOSIcon className="w-6 h-6 text-text-primary" />}
+                    icon={<ShareIOSIcon />}
                     text="Tap the 'Share' button in the bottom menu."
                 />
                  <InstructionStep
@@ -103,7 +112,7 @@ const Download: React.FC = () => {
 
             <InstructionCard title="For Android / Chrome">
                 <InstructionStep
-                    icon={<MenuAndroidIcon className="w-6 h-6 text-text-primary" />}
+                    icon={<MenuAndroidIcon />}
                     text="Tap the three-dot menu icon in the top right corner."
                 />
                  <InstructionStep
