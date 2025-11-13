@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
-import { auth, getOrCreateUserProfile, isFirebaseConfigured } from './services/firebase';
+import { doc, setDoc, updateDoc, increment, arrayUnion, arrayRemove } from 'firebase/firestore';
+import { auth, db, getOrCreateUserProfile, isFirebaseConfigured } from './services/firebase';
 import { User, Post, Comment, FriendRequest, Message, Notification, Story } from './types';
 import { MOCK_USERS, MOCK_POSTS, MOCK_FRIEND_REQUESTS, MOCK_MESSAGES, MOCK_NOTIFICATIONS, MOCK_STORIES } from './constants';
 import { uploadFile } from './services/storage';
@@ -123,42 +124,56 @@ export default function App() {
 
   const handleLikeToggle = useCallback((postId: string) => {
     if (!currentUser || isLimitedMode) return;
+    
+    // Optimistic UI update for likes and notifications
     setPosts(prevPosts =>
-      prevPosts.map(post => {
-        if (post.id === postId) {
-          const isLiked = post.likes.includes(currentUser.id);
+      prevPosts.map(p => {
+        if (p.id === postId) {
+          const isLiked = p.likes.includes(currentUser.id);
           const newLikes = isLiked
-            ? post.likes.filter(id => id !== currentUser.id)
-            : [...post.likes, currentUser.id];
+            ? p.likes.filter(id => id !== currentUser.id)
+            : [...p.likes, currentUser.id];
           
-          // Update points
-          setUsers(prevUsers => prevUsers.map(u => {
-            if (u.id === post.user.id) return { ...u, points: u.points + (isLiked ? -1 : 1) };
-            return u;
-          }));
-
-          // Add notification
-          if (!isLiked && post.user.id !== currentUser.id) {
+          if (!isLiked && p.user.id !== currentUser.id) {
             const newNotification: Notification = {
               id: `n${Date.now()}`,
               type: 'like',
               user: currentUser,
-              post: post,
+              post: p,
               timestamp: new Date(),
               read: false,
             };
             setNotifications(prev => [newNotification, ...prev]);
           }
 
-          return { ...post, likes: newLikes };
+          return { ...p, likes: newLikes };
         }
-        return post;
+        return p;
       })
     );
-  }, [currentUser, isLimitedMode]);
+  }, [currentUser, isLimitedMode, posts]);
 
   const handleAddComment = useCallback((postId: string, text: string) => {
     if (!text.trim() || !currentUser || isLimitedMode) return;
+    
+    // --- Start of Firestore update ---
+    const commenterRef = doc(db, "users", currentUser.id);
+
+    updateDoc(commenterRef, { points: increment(1) })
+    .then(() => {
+        // Success: Update local state for points
+        setUsers(prevUsers => prevUsers.map(u => {
+            if (u.id === currentUser.id) {
+                const updatedUser = { ...u, points: u.points + 1 };
+                setCurrentUser(updatedUser);
+                return updatedUser;
+            }
+            return u;
+        }));
+    }).catch(error => {
+        console.error("Failed to update points for comment:", error);
+    });
+    // --- End of Firestore update ---
 
     const newComment: Comment = {
       id: `c${Date.now()}`,
@@ -170,18 +185,12 @@ export default function App() {
     setPosts(prevPosts =>
       prevPosts.map(post => {
         if (post.id === postId) {
-           // Update points
-          setUsers(prevUsers => prevUsers.map(u => {
-            if (u.id === post.user.id) return { ...u, points: u.points + 2 };
-            if (u.id === currentUser.id) return { ...u, points: u.points + 1 };
-            return u;
-          }));
           return { ...post, comments: [...post.comments, newComment] };
         }
         return post;
       })
     );
-  }, [currentUser, isLimitedMode]);
+  }, [currentUser, isLimitedMode, posts]);
 
   const handleCreatePost = useCallback(async (caption: string, file: File) => {
       if (!currentUser || isLimitedMode) return;
@@ -241,16 +250,30 @@ export default function App() {
         coverPhotoUrl = await uploadFile(updatedData.coverFile, filePath);
       }
 
+      const userRef = doc(db, "users", currentUser.id);
+      const updatedUserFields = {
+        name: updatedData.name,
+        bio: updatedData.bio,
+        profileMusicUrl: updatedData.musicUrl,
+        avatar: avatarUrl,
+        coverPhoto: coverPhotoUrl,
+      };
+      
+      // Remove undefined values before sending to Firestore
+      Object.keys(updatedUserFields).forEach(key => {
+        if (updatedUserFields[key] === undefined) {
+            delete updatedUserFields[key];
+        }
+      });
+
+      await setDoc(userRef, updatedUserFields, { merge: true });
+
       setUsers(prevUsers =>
         prevUsers.map(user => {
           if (user.id === currentUser.id) {
             const updatedUser = {
               ...user,
-              name: updatedData.name,
-              bio: updatedData.bio,
-              profileMusicUrl: updatedData.musicUrl,
-              avatar: avatarUrl,
-              coverPhoto: coverPhotoUrl,
+              ...updatedUserFields,
             };
             setCurrentUser(updatedUser);
             return updatedUser;
@@ -286,45 +309,54 @@ export default function App() {
     setFriendRequests(prev => [...prev, newRequest]);
   }, [currentUser, users, isLimitedMode]);
   
-  const handleAcceptFriendRequest = useCallback((requestId: string) => {
-    if (isLimitedMode) return;
+  const handleAcceptFriendRequest = useCallback(async (requestId: string) => {
+    if (!currentUser || isLimitedMode) return;
     const request = friendRequests.find(r => r.id === requestId);
-    if (!request) return;
+    if (!request || request.to.id !== currentUser.id) return;
 
-    setUsers(prev => prev.map(u => {
-        if (u.id === request.from.id) return { ...u, friends: [...u.friends, request.to.id] };
-        if (u.id === request.to.id) return { ...u, friends: [...u.friends, request.from.id] };
-        return u;
-    }));
-    
-    setFriendRequests(prev => prev.filter(r => r.id !== requestId));
-  }, [friendRequests, isLimitedMode]);
+    const currentUserRef = doc(db, "users", currentUser.id);
+
+    try {
+        await updateDoc(currentUserRef, { friends: arrayUnion(request.from.id) });
+        
+        const updatedCurrentUser = { ...currentUser, friends: [...currentUser.friends, request.from.id] };
+        setCurrentUser(updatedCurrentUser);
+
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedCurrentUser : u));
+        
+        setFriendRequests(prev => prev.filter(r => r.id !== requestId));
+    } catch (error) {
+        console.error("Error accepting friend request:", error);
+    }
+  }, [friendRequests, isLimitedMode, currentUser]);
 
   const handleDeclineFriendRequest = useCallback((requestId: string) => {
     if (isLimitedMode) return;
     setFriendRequests(prev => prev.filter(r => r.id !== requestId));
   }, [isLimitedMode]);
 
-  const handleBlockUser = useCallback((userId: string) => {
+  const handleBlockUser = useCallback(async (userId: string) => {
     if (!currentUser || isLimitedMode) return;
-    setUsers(prev => prev.map(u => {
-        if (u.id === currentUser.id) {
-            const updatedUser = {
-                ...u,
-                blockedUsers: [...u.blockedUsers, userId],
-                friends: u.friends.filter(id => id !== userId)
-            };
-            setCurrentUser(updatedUser);
-            return updatedUser;
-        }
-        if (u.id === userId) {
-            return {
-                ...u,
-                friends: u.friends.filter(id => id !== currentUser.id)
-            };
-        }
-        return u;
-    }));
+    
+    const currentUserRef = doc(db, "users", currentUser.id);
+
+    try {
+        await updateDoc(currentUserRef, { 
+            blockedUsers: arrayUnion(userId),
+            friends: arrayRemove(userId)
+        });
+
+        const updatedUser = {
+            ...currentUser,
+            blockedUsers: [...currentUser.blockedUsers, userId],
+            friends: currentUser.friends.filter(id => id !== userId)
+        };
+        setCurrentUser(updatedUser);
+        setUsers(prev => prev.map(u => u.id === currentUser.id ? updatedUser : u));
+
+    } catch (error) {
+        console.error("Error blocking user:", error);
+    }
   }, [currentUser, isLimitedMode]);
 
   const handleSendMessage = useCallback((toId: string, text: string) => {

@@ -114,11 +114,17 @@ export const getOrCreateUserProfile = async (user: FirebaseUser): Promise<AppUse
         
         return newUserProfile;
     } else {
-        // User exists, return their profile, ensuring required arrays are present.
-        const data = docSnap.data();
+        // User exists, return their profile, ensuring all fields have valid defaults.
+        const data = docSnap.data() || {}; // Ensure data is an object even if it's undefined
         return {
             id: docSnap.id,
-            ...data,
+            name: data.name || (user.displayName || (user.email ? user.email.split('@')[0] : 'User')),
+            email: data.email || user.email || undefined,
+            avatar: data.avatar || user.photoURL || `https://picsum.photos/seed/${docSnap.id}/100/100`,
+            points: data.points || 0,
+            bio: data.bio || '',
+            coverPhoto: data.coverPhoto || `https://picsum.photos/seed/${docSnap.id}/1200/400`,
+            profileMusicUrl: data.profileMusicUrl || '',
             friends: data.friends || [],
             blockedUsers: data.blockedUsers || [],
         } as AppUser;
