@@ -14,7 +14,6 @@ const StoryViewer: React.FC<StoryViewerProps> = ({ user, allStories, onClose }) 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const videoRef = useRef<HTMLVideoElement>(null);
-  // FIX: Initialize useRef with null to provide an initial value, satisfying TypeScript's requirement for useRef<T>(initialValue: T).
   const animationFrameRef = useRef<number | null>(null);
   
   const userStories = allStories

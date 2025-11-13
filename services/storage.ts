@@ -8,7 +8,7 @@ import { storage } from './firebase';
  * @returns {Promise<string>} A promise that resolves with the public download URL of the uploaded file.
  */
 export const uploadFile = async (file: File, path: string): Promise<string> => {
-  const storageRef = ref(storage, path);
+  const storageRef = ref(storage!, path);
   
   try {
     const snapshot = await uploadBytes(storageRef, file);

@@ -1,42 +1,70 @@
-import { initializeApp } from 'firebase/app';
+import { initializeApp, FirebaseApp } from 'firebase/app';
 import {
     getAuth,
     User as FirebaseUser,
-    createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
-    updateProfile
+    updateProfile,
+    GoogleAuthProvider,
+    signInWithPopup,
+    createUserWithEmailAndPassword,
+    Auth
 } from 'firebase/auth';
-import { getFirestore, doc, getDoc, setDoc } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { getFirestore, doc, getDoc, setDoc, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 import { User as AppUser } from '../types';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCyIo8D4y09Ip53KWdf7D8gULG5L7kf9bQ",
-  authDomain: "appnino-fc293.firebaseapp.com",
-  projectId: "appnino-fc293",
-  storageBucket: "appnino-fc293.appspot.com",
-  messagingSenderId: "1023289201912",
-  appId: "1:1023289201912:web:631651a5a5e171a541570d",
-  measurementId: "G-3GCDJ34NHQ"
+  apiKey: "AIzaSyAKHqe7l-FdXjwYlOeWNoEmQfahRQfcb4A",
+  authDomain: "ninoviskapp.firebaseapp.com",
+  projectId: "ninoviskapp",
+  storageBucket: "ninoviskapp.appspot.com",
+  messagingSenderId: "178779435730",
+  appId: "1:178779435730:web:a4aa9dc18b8761010c330b",
+  measurementId: "G-4MJNBQBW9W"
 };
 
 // Check if the config has been filled out
 export const isFirebaseConfigured = firebaseConfig.apiKey !== "YOUR_API_KEY";
 
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
+let app: FirebaseApp;
+let auth: Auth;
+let db: Firestore;
+let storage: FirebaseStorage;
 
-// Initialize Firebase services
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+if (isFirebaseConfigured) {
+    app = initializeApp(firebaseConfig);
+    auth = getAuth(app);
+    db = getFirestore(app);
+    storage = getStorage(app);
+}
+
 
 export {
+    auth,
+    db,
+    storage,
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
     updateProfile
+};
+
+/**
+ * Signs in the user with Google.
+ * @returns {Promise<FirebaseUser>} The signed-in user.
+ */
+export const signInWithGoogle = async (): Promise<FirebaseUser> => {
+    const provider = new GoogleAuthProvider();
+    try {
+        const result = await signInWithPopup(auth!, provider);
+        // The onAuthStateChanged listener will handle the user profile creation.
+        return result.user;
+    } catch (error) {
+        console.error("Error during Google sign-in:", error);
+        throw error;
+    }
 };
 
 
@@ -47,17 +75,16 @@ export {
  * @returns {Promise<AppUser>} The user profile from Firestore.
  */
 export const getOrCreateUserProfile = async (user: FirebaseUser): Promise<AppUser> => {
-    const userRef = doc(db, "users", user.uid);
+    const userRef = doc(db!, "users", user.uid);
     const docSnap = await getDoc(userRef);
 
     if (!docSnap.exists()) {
         // User is new, create a profile document
         const { displayName, photoURL, uid, email } = user;
 
-        // Handle a race condition where the displayName hasn't been set yet.
-        // If displayName is null and the email is our custom format, extract the ID from it.
+        // If displayName is null (e.g., email/password signup), create one from the email.
         let profileName = displayName;
-        if (!profileName && email && email.endsWith('@ninovisk.app')) {
+        if (!profileName && email) {
             profileName = email.split('@')[0];
         }
         
@@ -87,7 +114,13 @@ export const getOrCreateUserProfile = async (user: FirebaseUser): Promise<AppUse
         
         return newUserProfile;
     } else {
-        // User exists, return their profile
-        return { id: docSnap.id, ...docSnap.data() } as AppUser;
+        // User exists, return their profile, ensuring required arrays are present.
+        const data = docSnap.data();
+        return {
+            id: docSnap.id,
+            ...data,
+            friends: data.friends || [],
+            blockedUsers: data.blockedUsers || [],
+        } as AppUser;
     }
 };

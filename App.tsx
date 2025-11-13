@@ -3,6 +3,7 @@ import { onAuthStateChanged, signOut } from 'firebase/auth';
 import { auth, getOrCreateUserProfile, isFirebaseConfigured } from './services/firebase';
 import { User, Post, Comment, FriendRequest, Message, Notification, Story } from './types';
 import { MOCK_USERS, MOCK_POSTS, MOCK_FRIEND_REQUESTS, MOCK_MESSAGES, MOCK_NOTIFICATIONS, MOCK_STORIES } from './constants';
+import { uploadFile } from './services/storage';
 
 import Header from './components/Header';
 import BottomNav from './components/BottomNav';
@@ -20,6 +21,7 @@ import StoryViewer from './components/StoryViewer';
 import CreateStoryModal from './components/CreateStoryModal';
 import Login from './components/Login';
 import Download from './components/Download';
+import LimitedModeBanner from './components/LimitedModeBanner';
 
 type ActiveTab = 'feed' | 'ranking' | 'analytics' | 'friends' | 'notifications' | 'profile' | 'review' | 'download';
 type View = 
@@ -30,6 +32,7 @@ type View =
 export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [isLimitedMode, setIsLimitedMode] = useState(false);
 
   const [posts, setPosts] = useState<Post[]>(MOCK_POSTS);
   const [users, setUsers] = useState<User[]>(MOCK_USERS);
@@ -50,17 +53,46 @@ export default function App() {
         setAuthLoading(false);
         return;
     }
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth!, async (firebaseUser) => {
         if (firebaseUser) {
-            const userProfile = await getOrCreateUserProfile(firebaseUser);
-            setCurrentUser(userProfile);
-            setUsers(prevUsers => {
-                const userExists = prevUsers.some(u => u.id === userProfile.id);
-                if (userExists) {
-                    return prevUsers.map(u => u.id === userProfile.id ? userProfile : u);
+            try {
+                const userProfile = await getOrCreateUserProfile(firebaseUser);
+                setCurrentUser(userProfile);
+                setIsLimitedMode(false); // Successfully connected, ensure limited mode is off
+                setUsers(prevUsers => {
+                    const userExists = prevUsers.some(u => u.id === userProfile.id);
+                    if (userExists) {
+                        return prevUsers.map(u => u.id === userProfile.id ? userProfile : u);
+                    }
+                    return [userProfile, ...prevUsers];
+                });
+            } catch (error: any) {
+                console.error("Failed to create or retrieve user profile:", error);
+                if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes('permission'))) {
+                    console.warn("Firestore permission error. Running in limited mode.");
+                    setIsLimitedMode(true);
+                    // Create a temporary user profile from auth data to allow app usage
+                    const { uid, displayName, photoURL, email } = firebaseUser;
+                    let profileName = displayName || (email ? email.split('@')[0] : 'New User');
+                    const mockUserProfile: User = {
+                        id: uid,
+                        name: profileName,
+                        email: email || undefined,
+                        avatar: photoURL || `https://picsum.photos/seed/${uid}/100/100`,
+                        points: 0,
+                        bio: 'Welcome to NinoVisk! (Limited Mode)',
+                        coverPhoto: `https://picsum.photos/seed/${uid}/1200/400`,
+                        profileMusicUrl: '',
+                        friends: [],
+                        blockedUsers: [],
+                    };
+                    setCurrentUser(mockUserProfile);
+                } else {
+                    // For other critical errors, it's safer to sign out
+                    await signOut(auth!);
+                    setCurrentUser(null);
                 }
-                return [userProfile, ...prevUsers];
-            });
+            }
         } else {
             setCurrentUser(null);
         }
@@ -79,7 +111,7 @@ export default function App() {
         return;
     }
     try {
-      await signOut(auth);
+      await signOut(auth!);
     } catch (error) {
         console.error("Sign out error", error);
     }
@@ -90,7 +122,7 @@ export default function App() {
   };
 
   const handleLikeToggle = useCallback((postId: string) => {
-    if (!currentUser) return;
+    if (!currentUser || isLimitedMode) return;
     setPosts(prevPosts =>
       prevPosts.map(post => {
         if (post.id === postId) {
@@ -123,10 +155,10 @@ export default function App() {
         return post;
       })
     );
-  }, [currentUser]);
+  }, [currentUser, isLimitedMode]);
 
   const handleAddComment = useCallback((postId: string, text: string) => {
-    if (!text.trim() || !currentUser) return;
+    if (!text.trim() || !currentUser || isLimitedMode) return;
 
     const newComment: Comment = {
       id: `c${Date.now()}`,
@@ -149,57 +181,87 @@ export default function App() {
         return post;
       })
     );
-  }, [currentUser]);
+  }, [currentUser, isLimitedMode]);
 
-  const handleCreatePost = useCallback((caption: string, file: File) => {
-      if (!currentUser) return;
-      const newPost: Post = {
-        id: `p${Date.now()}`,
-        type: file.type.startsWith('video/') ? 'video' : 'image',
-        url: URL.createObjectURL(file),
-        caption,
-        user: currentUser,
-        likes: [],
-        comments: [],
-        timestamp: new Date(),
-        status: isAdmin ? 'approved' : 'pending',
-      };
-      setPosts(prev => [newPost, ...prev]);
+  const handleCreatePost = useCallback(async (caption: string, file: File) => {
+      if (!currentUser || isLimitedMode) return;
       setIsCreateModalOpen(false);
-  }, [currentUser, isAdmin]);
+      try {
+        const filePath = `posts/${currentUser.id}/${Date.now()}_${file.name}`;
+        const fileUrl = await uploadFile(file, filePath);
+        const newPost: Post = {
+          id: `p${Date.now()}`,
+          type: file.type.startsWith('video/') ? 'video' : 'image',
+          url: fileUrl,
+          caption,
+          user: currentUser,
+          likes: [],
+          comments: [],
+          timestamp: new Date(),
+          status: isAdmin ? 'approved' : 'pending',
+        };
+        setPosts(prev => [newPost, ...prev]);
+      } catch (error) {
+          console.error("Failed to create post:", error);
+      }
+  }, [currentUser, isAdmin, isLimitedMode]);
 
-  const handleCreateStory = useCallback((file: File) => {
-    if (!currentUser) return;
-    const newStory: Story = {
-      id: `s${Date.now()}`,
-      userId: currentUser.id,
-      type: file.type.startsWith('video/') ? 'video' : 'image',
-      url: URL.createObjectURL(file),
-      timestamp: new Date(),
-    };
-    setStories(prev => [newStory, ...prev]);
+  const handleCreateStory = useCallback(async (file: File) => {
+    if (!currentUser || isLimitedMode) return;
     setCreateStoryModalOpen(false);
-  }, [currentUser]);
+    try {
+      const filePath = `stories/${currentUser.id}/${Date.now()}_${file.name}`;
+      const fileUrl = await uploadFile(file, filePath);
+      const newStory: Story = {
+        id: `s${Date.now()}`,
+        userId: currentUser.id,
+        type: file.type.startsWith('video/') ? 'video' : 'image',
+        url: fileUrl,
+        timestamp: new Date(),
+      };
+      setStories(prev => [newStory, ...prev]);
+    } catch (error) {
+        console.error("Failed to create story:", error);
+    }
+  }, [currentUser, isLimitedMode]);
 
-  const handleUpdateProfile = useCallback((updatedData: { name: string; bio: string; musicUrl: string; avatarFile?: File; coverFile?: File }) => {
-    if (!currentUser) return;
-    setUsers(prevUsers =>
-      prevUsers.map(user => {
-        if (user.id === currentUser.id) {
-          return {
-            ...user,
-            name: updatedData.name,
-            bio: updatedData.bio,
-            profileMusicUrl: updatedData.musicUrl,
-            avatar: updatedData.avatarFile ? URL.createObjectURL(updatedData.avatarFile) : user.avatar,
-            coverPhoto: updatedData.coverFile ? URL.createObjectURL(updatedData.coverFile) : user.coverPhoto,
-          };
-        }
-        return user;
-      })
-    );
+  const handleUpdateProfile = useCallback(async (updatedData: { name: string; bio: string; musicUrl: string; avatarFile?: File; coverFile?: File }) => {
+    if (!currentUser || isLimitedMode) return;
     setIsEditProfileModalOpen(false);
-  }, [currentUser]);
+    try {
+      let avatarUrl = currentUser.avatar;
+      if (updatedData.avatarFile) {
+        const filePath = `avatars/${currentUser.id}/${Date.now()}_${updatedData.avatarFile.name}`;
+        avatarUrl = await uploadFile(updatedData.avatarFile, filePath);
+      }
+
+      let coverPhotoUrl = currentUser.coverPhoto;
+      if (updatedData.coverFile) {
+        const filePath = `covers/${currentUser.id}/${Date.now()}_${updatedData.coverFile.name}`;
+        coverPhotoUrl = await uploadFile(updatedData.coverFile, filePath);
+      }
+
+      setUsers(prevUsers =>
+        prevUsers.map(user => {
+          if (user.id === currentUser.id) {
+            const updatedUser = {
+              ...user,
+              name: updatedData.name,
+              bio: updatedData.bio,
+              profileMusicUrl: updatedData.musicUrl,
+              avatar: avatarUrl,
+              coverPhoto: coverPhotoUrl,
+            };
+            setCurrentUser(updatedUser);
+            return updatedUser;
+          }
+          return user;
+        })
+      );
+    } catch (error) {
+      console.error("Error updating profile", error);
+    }
+  }, [currentUser, isLimitedMode]);
 
   const handleApprovePost = useCallback((postId: string) => {
       setPosts(prev => prev.map(p => p.id === postId ? {...p, status: 'approved'} : p));
@@ -210,7 +272,7 @@ export default function App() {
   }, []);
 
   const handleSendFriendRequest = useCallback((toId: string) => {
-    if (!currentUser || currentUser.id === toId) return;
+    if (!currentUser || currentUser.id === toId || isLimitedMode) return;
     const toUser = users.find(u => u.id === toId);
     if (!toUser) return;
     
@@ -222,9 +284,10 @@ export default function App() {
     };
 
     setFriendRequests(prev => [...prev, newRequest]);
-  }, [currentUser, users]);
+  }, [currentUser, users, isLimitedMode]);
   
   const handleAcceptFriendRequest = useCallback((requestId: string) => {
+    if (isLimitedMode) return;
     const request = friendRequests.find(r => r.id === requestId);
     if (!request) return;
 
@@ -235,21 +298,24 @@ export default function App() {
     }));
     
     setFriendRequests(prev => prev.filter(r => r.id !== requestId));
-  }, [friendRequests]);
+  }, [friendRequests, isLimitedMode]);
 
   const handleDeclineFriendRequest = useCallback((requestId: string) => {
+    if (isLimitedMode) return;
     setFriendRequests(prev => prev.filter(r => r.id !== requestId));
-  }, []);
+  }, [isLimitedMode]);
 
   const handleBlockUser = useCallback((userId: string) => {
-    if (!currentUser) return;
+    if (!currentUser || isLimitedMode) return;
     setUsers(prev => prev.map(u => {
         if (u.id === currentUser.id) {
-            return {
+            const updatedUser = {
                 ...u,
                 blockedUsers: [...u.blockedUsers, userId],
                 friends: u.friends.filter(id => id !== userId)
             };
+            setCurrentUser(updatedUser);
+            return updatedUser;
         }
         if (u.id === userId) {
             return {
@@ -259,10 +325,10 @@ export default function App() {
         }
         return u;
     }));
-  }, [currentUser]);
+  }, [currentUser, isLimitedMode]);
 
   const handleSendMessage = useCallback((toId: string, text: string) => {
-    if (!text.trim() || !currentUser) return;
+    if (!text.trim() || !currentUser || isLimitedMode) return;
     const newMessage: Message = {
       id: `m${Date.now()}`,
       fromId: currentUser.id,
@@ -271,7 +337,7 @@ export default function App() {
       timestamp: new Date(),
     };
     setMessages(prev => [...prev, newMessage]);
-  }, [currentUser]);
+  }, [currentUser, isLimitedMode]);
   
   const handleMarkNotificationsAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({...n, read: true})));
@@ -382,6 +448,7 @@ export default function App() {
   return (
     <div className="bg-gray-900 text-white min-h-screen font-sans flex flex-col">
       <Header user={currentUser} onSignOut={handleSignOut} />
+      {isLimitedMode && <LimitedModeBanner />}
       <main className="flex-grow container mx-auto px-4 py-4 mb-16">
         {renderContent()}
       </main>

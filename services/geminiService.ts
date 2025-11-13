@@ -2,7 +2,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { LocationData } from "../types";
 
-// FIX: Per coding guidelines, initialize GoogleGenAI directly assuming API_KEY is present.
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 export const analyzeLocationData = async (locations: LocationData[]): Promise<string> => {
