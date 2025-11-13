@@ -4,9 +4,10 @@ import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
     sendPasswordResetEmail,
-    signInWithGoogle
+    signInWithGoogle,
+    auth,
+    isFirebaseConfigured
 } from '../services/firebase';
-import { auth, isFirebaseConfigured } from '../services/firebase';
 import { User } from '../types';
 
 interface LoginProps {
@@ -153,8 +154,7 @@ const Login: React.FC<LoginProps> = ({ onMockLogin }) => {
         try {
             await sendPasswordResetEmail(auth!, email.trim());
             setResetEmailSent(true);
-        } catch (err: any)
-{
+        } catch (err: any) {
             setError(getFriendlyErrorMessage(err.code));
         } finally {
             setIsLoading(false);

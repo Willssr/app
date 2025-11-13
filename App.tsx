@@ -55,49 +55,49 @@ export default function App() {
         return;
     }
     const unsubscribe = onAuthStateChanged(auth!, async (firebaseUser) => {
-        if (firebaseUser) {
-            try {
-                const userProfile = await getOrCreateUserProfile(firebaseUser);
-                setCurrentUser(userProfile);
-                setIsLimitedMode(false); // Successfully connected, ensure limited mode is off
-                setUsers(prevUsers => {
-                    const userExists = prevUsers.some(u => u.id === userProfile.id);
-                    if (userExists) {
-                        return prevUsers.map(u => u.id === userProfile.id ? userProfile : u);
-                    }
-                    return [userProfile, ...prevUsers];
-                });
-            } catch (error: any) {
-                console.error("Failed to create or retrieve user profile:", error);
-                if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes('permission'))) {
-                    console.warn("Firestore permission error. Running in limited mode.");
-                    setIsLimitedMode(true);
-                    // Create a temporary user profile from auth data to allow app usage
-                    const { uid, displayName, photoURL, email } = firebaseUser;
-                    let profileName = displayName || (email ? email.split('@')[0] : 'New User');
-                    const mockUserProfile: User = {
-                        id: uid,
-                        name: profileName,
-                        email: email || undefined,
-                        avatar: photoURL || `https://picsum.photos/seed/${uid}/100/100`,
-                        points: 0,
-                        bio: 'Welcome to NinoVisk! (Limited Mode)',
-                        coverPhoto: `https://picsum.photos/seed/${uid}/1200/400`,
-                        profileMusicUrl: '',
-                        friends: [],
-                        blockedUsers: [],
-                    };
-                    setCurrentUser(mockUserProfile);
-                } else {
-                    // For other critical errors, it's safer to sign out
-                    await signOut(auth!);
-                    setCurrentUser(null);
+      if (firebaseUser) {
+        try {
+            const userProfile = await getOrCreateUserProfile(firebaseUser);
+            setCurrentUser(userProfile);
+            setIsLimitedMode(false); // Successfully connected, ensure limited mode is off
+            setUsers(prevUsers => {
+                const userExists = prevUsers.some(u => u.id === userProfile.id);
+                if (userExists) {
+                    return prevUsers.map(u => u.id === userProfile.id ? userProfile : u);
                 }
+                return [userProfile, ...prevUsers];
+            });
+        } catch (error: any) {
+            console.error("Failed to create or retrieve user profile:", error);
+            if (error.code === 'permission-denied' || (error.message && error.message.toLowerCase().includes('permission'))) {
+                console.warn("Firestore permission error. Running in limited mode.");
+                setIsLimitedMode(true);
+                // Create a temporary user profile from auth data to allow app usage
+                const { uid, displayName, photoURL, email } = firebaseUser;
+                let profileName = displayName || (email ? email.split('@')[0] : 'New User');
+                const mockUserProfile: User = {
+                    id: uid,
+                    name: profileName,
+                    email: email || undefined,
+                    avatar: photoURL || `https://picsum.photos/seed/${uid}/100/100`,
+                    points: 0,
+                    bio: 'Welcome to NinoVisk! (Limited Mode)',
+                    coverPhoto: `https://picsum.photos/seed/${uid}/1200/400`,
+                    profileMusicUrl: '',
+                    friends: [],
+                    blockedUsers: [],
+                };
+                setCurrentUser(mockUserProfile);
+            } else {
+                // For other critical errors, it's safer to sign out
+                await signOut(auth!);
+                setCurrentUser(null);
             }
-        } else {
-            setCurrentUser(null);
         }
-        setAuthLoading(false);
+      } else {
+          setCurrentUser(null);
+      }
+      setAuthLoading(false);
     });
 
     return () => unsubscribe();
@@ -151,7 +151,7 @@ export default function App() {
         return p;
       })
     );
-  }, [currentUser, isLimitedMode, posts]);
+  }, [currentUser, isLimitedMode]);
 
   const handleAddComment = useCallback((postId: string, text: string) => {
     if (!text.trim() || !currentUser || isLimitedMode) return;
@@ -190,7 +190,7 @@ export default function App() {
         return post;
       })
     );
-  }, [currentUser, isLimitedMode, posts]);
+  }, [currentUser, isLimitedMode]);
 
   const handleCreatePost = useCallback(async (caption: string, file: File) => {
       if (!currentUser || isLimitedMode) return;
@@ -234,7 +234,7 @@ export default function App() {
     }
   }, [currentUser, isLimitedMode]);
 
-  const handleUpdateProfile = useCallback(async (updatedData: { name: string; bio: string; musicUrl: string; avatarFile?: File; coverFile?: File }) => {
+ const handleUpdateProfile = useCallback(async (updatedData: { name: string; bio: string; musicUrl: string; avatarFile?: File; coverFile?: File }) => {
     if (!currentUser || isLimitedMode) return;
     setIsEditProfileModalOpen(false);
     try {
@@ -251,7 +251,7 @@ export default function App() {
       }
 
       const userRef = doc(db, "users", currentUser.id);
-      const updatedUserFields = {
+      const updatedUserFields: Partial<User> = {
         name: updatedData.name,
         bio: updatedData.bio,
         profileMusicUrl: updatedData.musicUrl,
@@ -259,8 +259,9 @@ export default function App() {
         coverPhoto: coverPhotoUrl,
       };
       
-      // Remove undefined values before sending to Firestore
-      Object.keys(updatedUserFields).forEach(key => {
+      // Remove undefined values before sending to Firestore and updating state
+      Object.keys(updatedUserFields).forEach(keyStr => {
+        const key = keyStr as keyof typeof updatedUserFields;
         if (updatedUserFields[key] === undefined) {
             delete updatedUserFields[key];
         }
@@ -268,19 +269,60 @@ export default function App() {
 
       await setDoc(userRef, updatedUserFields, { merge: true });
 
+      const updatedUser = {
+        ...currentUser,
+        ...updatedUserFields,
+      };
+
+      setCurrentUser(updatedUser);
+
       setUsers(prevUsers =>
-        prevUsers.map(user => {
-          if (user.id === currentUser.id) {
-            const updatedUser = {
-              ...user,
-              ...updatedUserFields,
-            };
-            setCurrentUser(updatedUser);
-            return updatedUser;
-          }
-          return user;
+        prevUsers.map(user => (user.id === currentUser.id ? updatedUser : user))
+      );
+      
+      setPosts(prevPosts =>
+        prevPosts.map(post => {
+          const isUserAuthor = post.user.id === currentUser.id;
+          const userInComments = post.comments.some(c => c.user.id === currentUser.id);
+          
+          if (!isUserAuthor && !userInComments) return post;
+
+          return {
+            ...post,
+            user: isUserAuthor ? updatedUser : post.user,
+            comments: post.comments.map(comment => 
+                comment.user.id === currentUser.id ? { ...comment, user: updatedUser } : comment
+            ),
+          };
         })
       );
+
+      setFriendRequests(prevRequests =>
+        prevRequests.map(req => {
+          if (req.from.id !== currentUser.id && req.to.id !== currentUser.id) return req;
+          return {
+              ...req,
+              from: req.from.id === currentUser.id ? updatedUser : req.from,
+              to: req.to.id === currentUser.id ? updatedUser : req.to,
+          };
+        })
+      );
+
+      setNotifications(prevNotifications =>
+        prevNotifications.map(notif => {
+          const isUserInNotif = notif.user.id === currentUser.id;
+          const isUserInNotifPost = notif.post?.user.id === currentUser.id;
+
+          if (!isUserInNotif && !isUserInNotifPost) return notif;
+          
+          return {
+              ...notif,
+              user: isUserInNotif ? updatedUser : notif.user,
+              post: (isUserInNotifPost && notif.post) ? { ...notif.post, user: updatedUser } : notif.post
+          };
+        })
+      );
+
     } catch (error) {
       console.error("Error updating profile", error);
     }
